@@ -1,0 +1,23 @@
+# deps
+node_modules/
+
+# next
+.next/
+out/
+
+# env (never commit keys)
+.env
+.env.local
+.env.*.local
+
+# prisma db
+prisma/hydra.db
+prisma/hydra.db-journal
+
+# os
+.DS_Store
+Thumbs.db
+
+# ide
+.vscode/
+.idea/
