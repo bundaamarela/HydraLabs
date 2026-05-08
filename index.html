@@ -1,0 +1,1590 @@
+<!doctype html>
+<html lang="pt" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hydra Labs</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   HYDRA LABS · monochromatic system · zero frameworks
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+
+  /* dark (default) ─ chrome */
+  --bg: #0C0B09;
+  --bg2: #161410;
+  --bg3: #1E1C18;
+  --border: #2A2824;
+  --fg: #F4EFE3;
+  --muted: #7A756E;
+  --muted2: #4A4840;
+  --ok: #7A9A6A;
+
+  /* dark ─ panels (cream) */
+  --panel-bg: #F4EFE3;
+  --panel-bg2: #EAE4D6;
+  --panel-bg3: #D8D2C4;
+  --panel-fg: #1A1714;
+  --panel-fg2: #3A3530;
+  --panel-muted: #7A756E;
+  --panel-line: #EAE4D6;
+
+  /* shared */
+  --r-panel: 10px;
+  --r-card: 10px;
+  --r-btn: 8px;
+  --r-chip: 20px;
+  --hairline: 0.5px solid var(--border);
+}
+
+[data-theme="light"] {
+  /* light ─ chrome (cream becomes background) */
+  --bg: #F4EFE3;
+  --bg2: #EAE4D6;
+  --bg3: #DDD8CC;
+  --border: #C8C2B4;
+  --fg: #1A1714;
+  --muted: #7A756E;
+  --muted2: #A39E94;
+  --ok: #4F6B40;
+
+  /* light ─ panels invert to dark */
+  --panel-bg: #0C0B09;
+  --panel-bg2: #161410;
+  --panel-bg3: #1E1C18;
+  --panel-fg: #F4EFE3;
+  --panel-fg2: #D8D2C4;
+  --panel-muted: #8A847A;
+  --panel-line: #2A2824;
+}
+
+/* ── reset + base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+  letter-spacing: -0.1px;
+}
+button { font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: pointer; }
+input, textarea, select { font: inherit; color: inherit; }
+input::placeholder, textarea::placeholder { color: var(--muted2); }
+::selection { background: rgba(244,239,227,0.18); color: var(--fg); }
+[data-theme="light"] ::selection { background: rgba(26,23,20,0.16); color: var(--fg); }
+.panel ::selection { background: rgba(26,23,20,0.16); color: var(--panel-fg); }
+[data-theme="light"] .panel ::selection { background: rgba(244,239,227,0.18); color: var(--panel-fg); }
+
+/* ── app shell ──────────────────────────────────────────────────────── */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w, 220px) 1fr var(--notes-w, 0px);
+  height: 100vh;
+  transition: grid-template-columns 0.2s ease;
+}
+.app[data-collapsed="true"]  { --sidebar-w: 52px; }
+.app[data-notes="true"]      { --notes-w: 280px; }
+
+/* ═══════════════════════ SIDEBAR ════════════════════════════════════ */
+.sidebar {
+  background: var(--bg2);
+  border-right: var(--hairline);
+  display: flex; flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+.sb-brand {
+  display: flex; align-items: center; gap: 9px;
+  padding: 14px 14px 14px;
+  border-bottom: var(--hairline);
+  min-height: 48px;
+}
+.sb-mark {
+  flex: 0 0 auto;
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  background: var(--fg);
+  display: flex; align-items: center; justify-content: center;
+}
+.sb-mark svg { display: block; }
+.sb-mark svg .stroke { stroke: var(--bg); }
+.sb-name {
+  font-size: 13px; font-weight: 500;
+  color: var(--fg);
+  letter-spacing: -0.4px;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.15s;
+}
+.app[data-collapsed="true"] .sb-name,
+.app[data-collapsed="true"] .sb-row-label,
+.app[data-collapsed="true"] .sb-meta,
+.app[data-collapsed="true"] .sb-section,
+.app[data-collapsed="true"] .sb-history { opacity: 0; pointer-events: none; }
+
+/* nav */
+.sb-nav {
+  padding: 8px 8px 10px;
+  border-bottom: var(--hairline);
+  display: flex; flex-direction: column; gap: 1px;
+}
+.sb-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.sb-row .ic {
+  flex: 0 0 16px;
+  width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+}
+.sb-row .ic svg { stroke: currentColor; fill: none; stroke-width: 1; }
+.sb-row-label { font-size: 12px; font-weight: 500; letter-spacing: -0.1px; }
+.sb-row:hover { background: var(--bg3); color: var(--fg); }
+.sb-row[data-active="true"] {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* history */
+.sb-history {
+  flex: 1; overflow-y: auto;
+  padding: 14px 8px 14px;
+  scrollbar-width: none;
+}
+.sb-history::-webkit-scrollbar { display: none; }
+.sb-section {
+  padding: 12px 10px 6px;
+  font-size: 9px; font-weight: 500;
+  color: var(--muted2);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.sb-section:first-child { padding-top: 2px; }
+.sb-item {
+  padding: 7px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.sb-item:hover { background: var(--bg3); }
+.sb-item-title {
+  font-size: 11.5px;
+  color: var(--fg);
+  letter-spacing: -0.1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.sb-meta {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.1px;
+}
+
+/* footer */
+.sb-foot {
+  padding: 8px;
+  border-top: var(--hairline);
+  display: flex; flex-direction: column; gap: 1px;
+}
+
+/* ═══════════════════════ MAIN ══════════════════════════════════════ */
+.main {
+  display: flex; flex-direction: column;
+  min-width: 0; min-height: 0;
+  position: relative;
+}
+.topbar {
+  height: 48px; flex: 0 0 48px;
+  background: var(--bg2);
+  border-bottom: var(--hairline);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+  z-index: 5;
+}
+.tb-mode {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 12px;
+  background: var(--bg3);
+  border: var(--hairline);
+  border-radius: var(--r-chip);
+  color: var(--muted);
+  font-size: 10px; font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  transition: background 0.12s, color 0.12s;
+}
+.tb-mode .slash { opacity: 0.55; }
+.tb-mode:hover { background: var(--fg); color: var(--bg); border-color: transparent; }
+.tb-mode[data-open="true"] { background: var(--fg); color: var(--bg); border-color: transparent; }
+
+.tb-right { display: flex; align-items: center; gap: 8px; }
+.tb-status {
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.1px;
+  margin-right: 6px;
+}
+.tb-density { display: inline-flex; gap: 4px; }
+.tb-density button {
+  font-size: 10.5px; font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: var(--bg3);
+  border: var(--hairline);
+  color: var(--muted);
+  letter-spacing: 0.1px;
+  transition: background 0.12s, color 0.12s;
+}
+.tb-density button:hover { color: var(--fg); }
+.tb-density button[data-active="true"] {
+  background: var(--fg); color: var(--bg); border-color: transparent;
+}
+
+/* ── screen container ───────────────────────────────────────────────── */
+.screens {
+  flex: 1; min-height: 0;
+  position: relative;
+}
+.screen {
+  position: absolute; inset: 0;
+  overflow-y: auto;
+  display: none;
+}
+.screen[data-active="true"] { display: block; }
+.screen-inner { max-width: 1180px; margin: 0 auto; padding: 14px 16px 0; }
+.screen[data-id="arena"] .screen-inner { padding-bottom: 200px; }
+.screen[data-id="library"] .screen-inner,
+.screen[data-id="config"]  .screen-inner { padding: 28px 24px 80px; max-width: 1100px; }
+
+/* ═══════════════════════ ARENA ═════════════════════════════════════ */
+.query-bubble {
+  background: var(--bg2);
+  border: var(--hairline);
+  border-radius: var(--r-panel);
+  padding: 9px 13px;
+  margin-bottom: 13px;
+  font-size: 12px;
+  color: #A8A098;
+  line-height: 1.55;
+  letter-spacing: -0.1px;
+}
+[data-theme="light"] .query-bubble { color: #6E685E; }
+
+.grid {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 4px;
+}
+.grid[data-density="2"] { grid-template-columns: 1fr 1fr; }
+.grid[data-density="4"] { grid-template-columns: 1fr 1fr; }
+.grid[data-density="8"] { grid-template-columns: 1fr 1fr; }
+.grid[data-density="2"] .panel:nth-child(n+3),
+.grid[data-density="4"] .panel:nth-child(n+5) { display: none; }
+
+/* response panel */
+.panel {
+  background: var(--panel-bg);
+  border-radius: var(--r-card);
+  padding: 12px 14px;
+  min-height: 110px;
+  display: flex; flex-direction: column;
+  position: relative;
+  transition: box-shadow 0.15s;
+  animation: panelIn 0.4s cubic-bezier(.2,.7,.2,1) both;
+}
+.panel:hover { box-shadow: 0 0 0 1px var(--panel-bg2); }
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.p-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.p-name {
+  display: flex; align-items: center; gap: 6px;
+}
+.p-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--panel-fg);
+}
+.p-label {
+  font-size: 10px; font-weight: 500;
+  color: var(--panel-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.p-status {
+  font-size: 9px;
+  color: var(--panel-muted);
+  letter-spacing: 0.3px;
+}
+.p-status[data-state="done"] { color: var(--ok); }
+
+.p-body {
+  font-size: 12px;
+  color: var(--panel-fg2);
+  line-height: 1.65;
+  letter-spacing: -0.1px;
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.p-cursor {
+  display: inline-block;
+  width: 1.5px; height: 11px;
+  background: var(--panel-fg2);
+  vertical-align: -1px;
+  margin-left: 1px;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* processing dots */
+.p-dots { display: flex; align-items: center; gap: 6px; padding: 8px 0; }
+.p-dots .d {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--panel-fg);
+  animation: dots 1.5s ease-in-out infinite;
+}
+@keyframes dots {
+  0%, 60%, 100% { transform: scale(1); opacity: 0.25; }
+  30%           { transform: scale(1.5); opacity: 0.9; }
+}
+
+.p-foot {
+  display: flex; gap: 14px;
+  border-top: 0.5px solid var(--panel-line);
+  padding-top: 7px; margin-top: 8px;
+}
+.p-foot button {
+  font-size: 10px;
+  color: var(--panel-muted);
+  letter-spacing: 0.1px;
+  transition: color 0.12s;
+}
+.p-foot button:hover { color: var(--panel-fg); }
+
+/* ── synthesis ──────────────────────────────────────────────────────── */
+.synth {
+  margin-top: 4px;
+  background: var(--bg2);
+  border: var(--hairline);
+  border-radius: var(--r-panel);
+  overflow: hidden;
+  animation: panelIn 0.5s cubic-bezier(.2,.7,.2,1) both;
+}
+.synth-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: var(--hairline);
+  flex-wrap: wrap; gap: 10px;
+}
+.synth-title {
+  display: flex; align-items: center; gap: 10px;
+}
+.synth-title .lbl {
+  font-size: 11px; font-weight: 500;
+  color: var(--fg); letter-spacing: -0.2px;
+}
+.synth-badge {
+  font-size: 9px; font-weight: 500;
+  padding: 3px 9px;
+  background: var(--bg3);
+  border-radius: var(--r-chip);
+  color: var(--muted);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.synth-actions { display: flex; align-items: center; gap: 6px; }
+.synth-actions .exp {
+  font-size: 10px; font-weight: 500;
+  color: var(--muted);
+  background: var(--bg3);
+  border: var(--hairline);
+  border-radius: 5px;
+  padding: 4px 9px;
+  letter-spacing: 0.3px;
+  transition: color 0.12s;
+}
+.synth-actions .exp:hover { color: var(--fg); }
+.synth-actions .save {
+  background: var(--fg); color: var(--bg);
+  font-size: 11px; font-weight: 500;
+  padding: 6px 13px; border-radius: var(--r-btn);
+  margin-left: 6px;
+  letter-spacing: -0.1px;
+  transition: opacity 0.12s, transform 0.06s;
+}
+.synth-actions .save:hover { opacity: 0.88; }
+.synth-actions .save:active { transform: scale(0.97); }
+
+.synth-block {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 18px;
+  padding: 14px 16px;
+  border-top: var(--hairline);
+}
+.synth-block:first-of-type { border-top: none; }
+.synth-block-label {
+  font-size: 9px; font-weight: 500;
+  color: var(--muted2);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding-top: 3px;
+}
+[data-theme="light"] .synth-block-label { color: var(--muted); }
+.synth-block-body {
+  font-size: 12px;
+  color: #A8A098;
+  line-height: 1.7;
+  letter-spacing: -0.1px;
+}
+[data-theme="light"] .synth-block-body { color: #6E685E; }
+
+/* ═══════════════════════ INPUT BAR (fixed) ═════════════════════════ */
+.input-fade {
+  position: absolute;
+  left: 0; right: 0; bottom: var(--inbar-h, 90px);
+  height: 30px;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+  pointer-events: none;
+  z-index: 8;
+}
+.input-bar {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 10px 16px 16px;
+  z-index: 9;
+}
+.input-card {
+  max-width: 1180px; margin: 0 auto;
+  background: var(--bg2);
+  border: var(--hairline);
+  border-radius: 12px;
+  padding: 11px 13px;
+}
+.chips {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 9px;
+}
+.chip {
+  font-size: 10.5px;
+  padding: 4px 11px;
+  background: var(--bg3);
+  border: var(--hairline);
+  border-radius: var(--r-chip);
+  color: #8A8480;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+[data-theme="light"] .chip { color: #5A554E; }
+.chip:hover { color: var(--fg); border-color: var(--muted2); }
+
+.in-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.in-pipe {
+  font-size: 12px; color: var(--muted2); opacity: 0.6;
+  flex: 0 0 auto;
+}
+.in-field {
+  flex: 1;
+  background: transparent;
+  border: none; outline: none;
+  color: var(--fg);
+  font-size: 12.5px;
+  letter-spacing: -0.1px;
+  padding: 4px 0;
+}
+.in-send {
+  background: var(--fg); color: var(--bg);
+  font-size: 11.5px; font-weight: 500;
+  padding: 6px 16px; border-radius: var(--r-btn);
+  letter-spacing: -0.1px;
+  transition: opacity 0.12s, transform 0.06s;
+  flex: 0 0 auto;
+}
+.in-send:hover { opacity: 0.88; }
+.in-send:active { transform: scale(0.97); }
+.in-send[disabled] { opacity: 0.5; cursor: default; }
+
+/* ═══════════════════════ MODE POPOVER ══════════════════════════════ */
+.popover-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  background: transparent;
+}
+.popover-overlay[hidden] { display: none; }
+.popover {
+  position: absolute;
+  top: var(--pop-top, 56px);
+  left: var(--pop-left, 16px);
+  background: var(--bg2);
+  border: var(--hairline);
+  border-radius: 12px;
+  padding: 6px;
+  min-width: 256px;
+  animation: popIn 0.13s ease-out both;
+}
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.pop-opt {
+  padding: 9px 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.pop-opt:hover { background: var(--bg3); }
+.pop-opt[data-active="true"] {
+  background: var(--fg);
+}
+.pop-opt[data-active="true"] .pop-name { color: var(--bg); }
+.pop-opt[data-active="true"] .pop-desc { color: var(--bg); opacity: 0.5; }
+.pop-name {
+  font-size: 12px; font-weight: 500;
+  color: var(--fg);
+  letter-spacing: -0.1px;
+}
+.pop-name .slash { opacity: 0.55; margin-right: 1px; }
+.pop-desc {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 2px;
+  letter-spacing: -0.05px;
+}
+
+/* ═══════════════════════ NOTES PANEL ═══════════════════════════════ */
+.notes-toggle {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--bg2);
+  border: var(--hairline);
+  color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 30;
+  transition: background 0.12s, color 0.12s, opacity 0.2s, right 0.2s ease;
+}
+.notes-toggle:hover { background: var(--bg3); color: var(--fg); }
+.app[data-notes="true"] .notes-toggle { right: 296px; opacity: 0; pointer-events: none; }
+
+.notes-panel {
+  background: var(--bg2);
+  border-left: var(--hairline);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+.notes-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: var(--hairline);
+  min-height: 48px;
+}
+.notes-title { font-size: 13px; font-weight: 500; color: var(--fg); letter-spacing: -0.3px; }
+.notes-close {
+  width: 24px; height: 24px;
+  font-size: 16px; line-height: 1;
+  color: var(--muted);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s, color 0.12s;
+}
+.notes-close:hover { background: var(--bg3); color: var(--fg); }
+.notes-body {
+  flex: 1;
+  background: transparent;
+  border: none; outline: none; resize: none;
+  padding: 14px 16px;
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 12px; line-height: 1.7;
+  letter-spacing: -0.1px;
+}
+.notes-foot {
+  padding: 9px 16px;
+  border-top: var(--hairline);
+  font-size: 10px;
+  color: var(--muted2);
+  letter-spacing: 0.2px;
+}
+
+/* ═══════════════════════ BIBLIOTECA ════════════════════════════════ */
+.lib-head {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.screen-title {
+  font-size: 15px; font-weight: 500;
+  color: var(--fg); letter-spacing: -0.4px;
+  margin-right: auto;
+}
+.search-box {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg3);
+  border: var(--hairline);
+  border-radius: var(--r-btn);
+  padding: 7px 12px;
+  flex: 0 0 280px;
+}
+.search-box svg { stroke: var(--muted); fill: none; stroke-width: 1; }
+.search-box input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-size: 12px; color: var(--fg); letter-spacing: -0.1px;
+}
+.lib-filters { display: flex; gap: 4px; flex-wrap: wrap; }
+.lib-filters button {
+  font-size: 10.5px; font-weight: 500;
+  padding: 5px 11px;
+  background: var(--bg3);
+  border: var(--hairline);
+  border-radius: var(--r-chip);
+  color: var(--muted);
+  letter-spacing: 0.1px;
+  transition: background 0.12s, color 0.12s;
+}
+.lib-filters button:hover { color: var(--fg); }
+.lib-filters button[data-active="true"] {
+  background: var(--fg); color: var(--bg); border-color: transparent;
+}
+
+.lib-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+@media (max-width: 980px) { .lib-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .lib-grid { grid-template-columns: 1fr; } }
+
+.lib-card {
+  background: var(--bg2);
+  border: var(--hairline);
+  border-radius: var(--r-card);
+  padding: 13px 14px;
+  cursor: pointer;
+  transition: border-color 0.12s, transform 0.12s;
+}
+.lib-card:hover { border-color: var(--muted2); }
+.lib-card-title {
+  font-size: 13px; font-weight: 500;
+  color: var(--fg); letter-spacing: -0.2px;
+}
+.lib-card-when {
+  font-size: 10px; color: var(--muted);
+  margin-top: 3px; letter-spacing: 0.1px;
+}
+.lib-card-badges { display: flex; gap: 5px; margin-top: 9px; flex-wrap: wrap; }
+.lib-card-badges .b {
+  font-size: 9px; font-weight: 500;
+  padding: 2px 8px;
+  background: var(--bg3);
+  border: var(--hairline);
+  border-radius: var(--r-chip);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.lib-card-preview {
+  font-size: 11px; color: var(--muted);
+  margin-top: 8px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-style: italic;
+  letter-spacing: -0.05px;
+}
+.lib-card-foot {
+  display: flex; gap: 14px;
+  border-top: var(--hairline);
+  margin-top: 10px; padding-top: 8px;
+}
+.lib-card-foot button {
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.1px;
+  transition: color 0.12s;
+}
+.lib-card-foot button:hover { color: var(--fg); }
+
+.lib-empty {
+  grid-column: 1 / -1;
+  padding: 60px 20px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted2);
+}
+
+/* ═══════════════════════ CONFIGURAÇÃO ══════════════════════════════ */
+.cfg-head { margin-bottom: 22px; }
+.cfg-group { margin-bottom: 32px; }
+.cfg-group-label {
+  font-size: 9px; font-weight: 500;
+  color: var(--muted2);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding-bottom: 10px;
+  border-bottom: var(--hairline);
+  margin-bottom: 10px;
+}
+[data-theme="light"] .cfg-group-label { color: var(--muted); }
+
+.cfg-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 9px 4px;
+  border-bottom: var(--hairline);
+}
+.cfg-row:last-child { border-bottom: none; }
+.cfg-row-label {
+  display: flex; align-items: center; gap: 7px;
+  min-width: 130px;
+}
+.cfg-key-name {
+  font-size: 10px; font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 80px;
+}
+.cfg-row input[type="password"],
+.cfg-row input[type="text"] {
+  flex: 1;
+  background: var(--bg3);
+  border: var(--hairline);
+  border-radius: 7px;
+  padding: 6px 10px;
+  font-size: 12px; color: var(--fg);
+  font-family: var(--font-mono);
+  outline: none;
+  letter-spacing: 0;
+}
+.cfg-rever {
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.1px;
+  transition: color 0.12s;
+  flex: 0 0 auto;
+}
+.cfg-rever:hover { color: var(--fg); }
+.cfg-state {
+  font-size: 10px; flex: 0 0 auto;
+  letter-spacing: 0.1px;
+  min-width: 60px; text-align: right;
+}
+.cfg-state[data-on="true"] { color: var(--ok); }
+.cfg-state[data-on="false"] { color: var(--muted); }
+
+.cfg-pref-label {
+  flex: 1;
+  font-size: 12px; color: var(--fg);
+  letter-spacing: -0.1px;
+}
+.cfg-pref-hint {
+  font-size: 11px; color: var(--muted);
+  margin-top: 2px;
+  letter-spacing: -0.05px;
+}
+select.cfg-select {
+  background: var(--bg3);
+  border: var(--hairline);
+  border-radius: 7px;
+  padding: 6px 28px 6px 10px;
+  color: var(--fg);
+  font-size: 11.5px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+                    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+.cfg-toggle-group { display: inline-flex; gap: 4px; }
+.cfg-toggle-group button {
+  font-size: 10.5px; font-weight: 500;
+  padding: 5px 11px;
+  border-radius: 6px;
+  background: var(--bg3);
+  border: var(--hairline);
+  color: var(--muted);
+  letter-spacing: 0.1px;
+  transition: background 0.12s, color 0.12s;
+}
+.cfg-toggle-group button[data-active="true"] {
+  background: var(--fg); color: var(--bg); border-color: transparent;
+}
+.cfg-slider {
+  flex: 1;
+  display: flex; align-items: center; gap: 10px;
+  max-width: 360px;
+}
+.cfg-slider input[type=range] { flex: 1; accent-color: var(--fg); }
+.cfg-slider .lbl {
+  font-size: 10px; color: var(--muted); min-width: 40px; text-align: right;
+  letter-spacing: 0.2px;
+}
+.cfg-data-line {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 4px;
+  border-bottom: var(--hairline);
+}
+.cfg-data-line:last-child { border-bottom: none; }
+.cfg-data-line .info {
+  font-size: 12px; color: var(--fg); letter-spacing: -0.1px;
+}
+.cfg-data-line .info span { color: var(--muted); }
+.cfg-data-line button {
+  font-size: 11px; color: var(--muted);
+  letter-spacing: 0.1px;
+  transition: color 0.12s;
+}
+.cfg-data-line button:hover { color: var(--fg); }
+
+/* ═══════════════════════ MISC / FOCUS ══════════════════════════════ */
+:focus-visible { outline: 1px solid var(--muted); outline-offset: 2px; border-radius: 4px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offset: 0; }
+</style>
+</head>
+<body>
+
+<div id="app" class="app" data-collapsed="false" data-notes="false">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="sidebar">
+    <div class="sb-brand" title="Hydra Labs">
+      <span class="sb-mark" aria-hidden="true">
+        <!-- octagon mark, 16px -->
+        <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
+          <g class="stroke" stroke-width="1.4" stroke-linejoin="round">
+            <polygon points="9.5,3 22.5,3 29,9.5 29,22.5 22.5,29 9.5,29 3,22.5 3,9.5"/>
+            <polygon points="13,11 19,11 21,13 21,19 19,21 13,21 11,19 11,13"/>
+            <line x1="3" y1="3" x2="29" y2="29"/>
+            <line x1="29" y1="3" x2="3" y2="29"/>
+          </g>
+        </svg>
+      </span>
+      <span class="sb-name">Hydra Labs</span>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="sb-row" data-nav="arena" data-active="true">
+        <span class="ic"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5"/><circle cx="7" cy="7" r="2"/></svg></span>
+        <span class="sb-row-label">Arena</span>
+      </div>
+      <div class="sb-row" data-nav="library">
+        <span class="ic"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="2.5" y="2" width="9" height="10" rx="0.5"/><line x1="4.8" y1="4.5" x2="4.8" y2="9.5"/><line x1="7" y1="4.5" x2="7" y2="9.5"/></svg></span>
+        <span class="sb-row-label">Biblioteca</span>
+      </div>
+      <div class="sb-row" data-nav="config">
+        <span class="ic"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="2"/><path d="M7 1.5v2 M7 10.5v2 M1.5 7h2 M10.5 7h2 M3 3l1.4 1.4 M9.6 9.6 11 11 M3 11l1.4-1.4 M9.6 4.4 11 3"/></svg></span>
+        <span class="sb-row-label">Configuração</span>
+      </div>
+    </nav>
+
+    <div class="sb-history" id="sb-history"></div>
+
+    <div class="sb-foot">
+      <div class="sb-row" id="theme-toggle">
+        <span class="ic" id="theme-ic">
+          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1a6 6 0 1 0 0 12V1z" fill="currentColor"/><circle cx="7" cy="7" r="5.5"/></svg>
+        </span>
+        <span class="sb-row-label" id="theme-label">Tema claro</span>
+      </div>
+      <div class="sb-row" id="collapse-toggle">
+        <span class="ic" id="collapse-ic">
+          <svg width="14" height="14" viewBox="0 0 14 14"><polyline points="8,3 4,7 8,11" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="sb-row-label">Recolher</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <button class="tb-mode" id="mode-btn" data-open="false">
+        <span class="slash">/</span><span id="mode-label">Raciocínio</span>
+      </button>
+      <div class="tb-right">
+        <span class="tb-status" id="tb-status">8 a aguardar · 0 concluídas</span>
+        <div class="tb-density">
+          <button data-d="2">2×</button>
+          <button data-d="4">4×</button>
+          <button data-d="8" data-active="true">8×</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="screens">
+
+      <!-- ARENA -->
+      <section class="screen" data-id="arena" data-active="true">
+        <div class="screen-inner">
+          <div class="query-bubble" id="query-bubble">"Qual o impacto das redes de influência nos sistemas democráticos modernos?"</div>
+          <div class="grid" id="grid" data-density="8"></div>
+          <div id="synth-mount"></div>
+        </div>
+        <div class="input-fade"></div>
+        <div class="input-bar">
+          <div class="input-card">
+            <div class="chips" id="chips"></div>
+            <div class="in-row">
+              <span class="in-pipe">|</span>
+              <input class="in-field" id="in-field" type="text" placeholder="Faz a tua pergunta às 8 inteligências…" />
+              <button class="in-send" id="in-send">Enviar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BIBLIOTECA -->
+      <section class="screen" data-id="library">
+        <div class="screen-inner">
+          <div class="lib-head">
+            <h1 class="screen-title">Biblioteca</h1>
+            <div class="search-box">
+              <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="5" cy="5" r="3.2"/><line x1="7.5" y1="7.5" x2="10" y2="10" stroke-linecap="round"/></svg>
+              <input id="lib-search" placeholder="Buscar sessões…" />
+            </div>
+            <div class="lib-filters" id="lib-filters">
+              <button data-f="all" data-active="true">Todos</button>
+              <button data-f="/Rápido">/Rápido</button>
+              <button data-f="/Raciocínio">/Raciocínio</button>
+              <button data-f="/Pesquisa">/Pesquisa</button>
+              <button data-f="/Investigação">/Investigação</button>
+            </div>
+          </div>
+          <div class="lib-grid" id="lib-grid"></div>
+        </div>
+      </section>
+
+      <!-- CONFIGURAÇÃO -->
+      <section class="screen" data-id="config">
+        <div class="screen-inner">
+          <div class="cfg-head"><h1 class="screen-title">Configuração</h1></div>
+          <div id="cfg-mount"></div>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- ═══════════ NOTES PANEL ═══════════ -->
+  <aside class="notes-panel" id="notes-panel">
+    <div class="notes-head">
+      <span class="notes-title">Notas</span>
+      <button class="notes-close" id="notes-close" aria-label="Fechar">×</button>
+    </div>
+    <textarea class="notes-body" id="notes-body" placeholder="Escreve aqui…"></textarea>
+    <div class="notes-foot">Guardado automaticamente</div>
+  </aside>
+
+</div>
+
+<!-- floating notes toggle -->
+<button class="notes-toggle" id="notes-toggle" aria-label="Abrir notas" title="Notas">
+  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round">
+    <rect x="3" y="2.5" width="9" height="10" rx="1"/>
+    <line x1="5" y1="5.2" x2="10" y2="5.2"/>
+    <line x1="5" y1="7.5" x2="10" y2="7.5"/>
+    <line x1="5" y1="9.8" x2="8" y2="9.8"/>
+  </svg>
+</button>
+
+<!-- mode popover -->
+<div class="popover-overlay" id="mode-overlay" hidden>
+  <div class="popover" id="mode-popover" role="menu"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// HYDRA LABS · vanilla controller
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── data ──────────────────────────────────────────────────────────────────
+
+const MODELS = [
+  { id: 'claude',     name: 'Claude',     offset: '0s'    },
+  { id: 'grok',       name: 'Grok',       offset: '0.04s' },
+  { id: 'chatgpt',    name: 'ChatGPT',    offset: '0.06s' },
+  { id: 'gemini',     name: 'Gemini',     offset: '0.1s'  },
+  { id: 'perplexity', name: 'Perplexity', offset: '0.08s' },
+  { id: 'deepseek',   name: 'DeepSeek',   offset: '0.13s' },
+  { id: 'mistral',    name: 'Mistral',    offset: '0.09s' },
+  { id: 'cohere',     name: 'Cohere',     offset: '0.05s' },
+];
+
+const DEFAULT_QUERY = 'Qual o impacto das redes de influência nos sistemas democráticos modernos?';
+
+const RESPONSES = {
+  claude:
+    'As redes de influência operam por captura institucional, manufactura de consenso e erosão epistémica. O efeito não é um colapso visível, mas uma deriva — a janela de Overton desloca-se sem que ninguém pareça responsável. A democracia formal sobrevive; a deliberação substantiva atrofia.',
+  grok:
+    'Democracia é uma ficção útil. O que existe são oligarquias com eleições periódicas. As redes não corrompem o sistema — elas são o sistema. Quem o nega ou é ingénuo, ou faz parte da rede.',
+  chatgpt:
+    'Três dimensões importam: concentração financeira, amplificação algorítmica e captura regulatória. A literatura empírica sugere que partidos com >40% de financiamento concentrado adoptam políticas significativamente desviadas da mediana do eleitor.',
+  gemini:
+    'Há um trade-off mensurável entre velocidade de circulação informacional e qualidade deliberativa. As redes aceleram o ciclo de feedback ao ponto de tornar a reflexão pública estruturalmente impossível. O problema é cinético, não moral.',
+  perplexity:
+    'Estudos do Pew (2024) e do Reuters Institute mostram que 63% dos cidadãos em democracias OECD identificam redes informais como "mais influentes que o voto". A erosão da confiança institucional precede — não segue — a polarização.',
+  deepseek:
+    'Modelando como rede dirigida com pesos de capital social, o equilíbrio estável favorece nós com alta centralidade de intermediação. O voto é ruído de baixa amplitude sobreposto a um sinal de coordenação oligárquica.',
+  mistral:
+    'A questão é mal-posta. Não há sistema democrático "puro" a ser corrompido — todas as democracias históricas foram redes de influência sobrepostas a procedimentos formais. A diferença actual é a escala e a opacidade.',
+  cohere:
+    'Operacionalmente: três mecanismos — lobbying directo, pré-compromisso de elites, e moldagem da agenda mediática. O terceiro é o mais consequente porque opera antes de qualquer decisão explícita ser tomada.',
+};
+
+const SUGGESTIONS = [
+  'Teoria dos jogos',
+  'Poder e instituições',
+  'Psicologia da manipulação',
+  'Sistemas complexos',
+];
+
+const MODES = [
+  { id: 'rapido',       label: 'Rápido',       desc: 'Resposta directa. Máximo 150 palavras.' },
+  { id: 'raciocinio',   label: 'Raciocínio',   desc: 'Cadeia de pensamento. Respostas exaustivas.' },
+  { id: 'pesquisa',     label: 'Pesquisa',     desc: 'Grounding factual. Fontes priorizadas.' },
+  { id: 'investigacao', label: 'Investigação', desc: 'Análise profunda. Pressupostos mapeados.' },
+];
+
+const SYNTHESIS = [
+  { label: 'CONSENSO',    body: 'As oito vozes convergem: as redes de influência não são um defeito periférico do sistema democrático — são parte da sua estrutura operacional. A questão deixou de ser "se" e passou a ser "como" e "com que magnitude". Captura institucional, amplificação algorítmica e concentração financeira aparecem repetidos em pelo menos cinco respostas independentes.' },
+  { label: 'DIVERGÊNCIA', body: 'Grok e Mistral pressionam para uma posição cínica — a democracia "pura" como ficção retórica. Claude, Gemini e Cohere mantêm uma análise clínica, identificando os mesmos fenómenos sem recurso ao desespero. ChatGPT e DeepSeek tratam o problema como mensurável; Perplexity ancora em estudos empíricos. A divergência é tonal, não substantiva.' },
+  { label: 'INSIGHT',     body: 'Nenhum dos oito modelos abordou contra-mecanismos viáveis: jornalismo investigativo, conselhos cidadãos, transparência radical de financiamento. A análise é unanimemente diagnóstica, raramente prescritiva — uma assimetria que vale a pena interrogar na próxima iteração.' },
+];
+
+const SESSIONS = [
+  { title: 'Redes de influência democrática',     when: 'hoje 14:32',  group: 'hoje',  mode: '/Raciocínio',   voices: 8, preview: 'Qual o impacto das redes de influência nos sistemas democráticos modernos?' },
+  { title: 'Teoria dos jogos aplicada',           when: 'hoje 11:07',  group: 'hoje',  mode: '/Investigação', voices: 8, preview: 'Como modelar coligações instáveis em equilíbrios não-cooperativos repetidos?' },
+  { title: 'Psicologia da manipulação',           when: 'ontem 22:14', group: 'ontem', mode: '/Pesquisa',     voices: 4, preview: 'Quais os mecanismos cognitivos explorados em campanhas de desinformação?' },
+  { title: 'Sistemas complexos e caos',           when: 'ontem 18:43', group: 'ontem', mode: '/Raciocínio',   voices: 8, preview: 'Onde está a fronteira entre comportamento caótico e meramente complexo?' },
+  { title: 'Poder e arquitectura institucional',  when: 'ontem 09:21', group: 'ontem', mode: '/Investigação', voices: 8, preview: 'Que arranjos institucionais resistem melhor a captura por elites?' },
+  { title: 'Filosofia da mente e consciência',    when: 'seg 20:11',   group: 'semana',mode: '/Raciocínio',   voices: 8, preview: 'A consciência é um fenómeno computacional ou irredutivelmente físico?' },
+  { title: 'Geopolítica do Indo-Pacífico',        when: 'seg 15:38',   group: 'semana',mode: '/Pesquisa',     voices: 8, preview: 'Que cenários de confrontação Taiwan-China são plausíveis até 2030?' },
+  { title: 'Epistemologia e certeza',             when: 'dom 11:02',   group: 'semana',mode: '/Investigação', voices: 4, preview: 'Quão justificada pode ser uma crença sem critério externo de validação?' },
+  { title: 'Linguagem e poder simbólico',         when: 'sáb 17:55',   group: 'semana',mode: '/Rápido',       voices: 2, preview: 'Como Bourdieu conceptualiza a violência simbólica em práticas linguísticas?' },
+];
+
+// ── state ─────────────────────────────────────────────────────────────────
+
+const state = {
+  view: 'arena',
+  theme: 'dark',
+  collapsed: false,
+  notesOpen: false,
+  mode: 'raciocinio',
+  density: 8,
+  query: DEFAULT_QUERY,
+  panels: MODELS.map(m => ({ id: m.id, name: m.name, status: 'streaming', text: '' })),
+  running: false,
+  streamSpeed: 18, // ms/char
+  libFilter: 'all',
+  libQuery: '',
+};
+
+// initial seeded scenario: 1 streaming, 1 done, rest processing
+state.panels[0] = { id: 'claude', name: 'Claude', status: 'streaming', text: RESPONSES.claude.slice(0, 96) };
+state.panels[1] = { id: 'grok',   name: 'Grok',   status: 'done',      text: RESPONSES.grok };
+for (let i = 2; i < state.panels.length; i++) {
+  state.panels[i] = { id: MODELS[i].id, name: MODELS[i].name, status: 'processing', text: '' };
+}
+
+const timers = [];
+function clearAllTimers() { while (timers.length) clearTimeout(timers.pop()); }
+
+// ── helpers ───────────────────────────────────────────────────────────────
+
+const $  = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+function el(tag, attrs = {}, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') e.className = v;
+    else if (k === 'html') e.innerHTML = v;
+    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const c of children.flat()) {
+    if (c == null || c === false) continue;
+    e.append(c.nodeType ? c : document.createTextNode(c));
+  }
+  return e;
+}
+
+// ── sidebar history render ────────────────────────────────────────────────
+
+function renderHistory() {
+  const root = $('#sb-history');
+  root.innerHTML = '';
+  const groups = [
+    { key: 'hoje',   label: 'Hoje' },
+    { key: 'ontem',  label: 'Ontem' },
+    { key: 'semana', label: 'Esta semana' },
+  ];
+  for (const g of groups) {
+    const items = SESSIONS.filter(s => s.group === g.key);
+    if (!items.length) continue;
+    root.append(el('div', { class: 'sb-section' }, g.label));
+    for (const s of items) {
+      root.append(
+        el('div', { class: 'sb-item', title: s.title, onclick: () => goto('arena') },
+          el('div', { class: 'sb-item-title' }, s.title),
+          el('div', { class: 'sb-meta' }, `${s.mode} · ${s.voices} vozes`),
+        )
+      );
+    }
+  }
+}
+
+// ── chips render ──────────────────────────────────────────────────────────
+
+function renderChips() {
+  const root = $('#chips');
+  root.innerHTML = '';
+  for (const s of SUGGESTIONS) {
+    root.append(el('button', { class: 'chip', onclick: () => { $('#in-field').value = s; $('#in-field').focus(); } }, s));
+  }
+}
+
+// ── panels (arena grid) ───────────────────────────────────────────────────
+
+function renderGrid() {
+  const grid = $('#grid');
+  grid.dataset.density = state.density;
+  grid.innerHTML = '';
+  state.panels.forEach((p, i) => {
+    const m = MODELS[i];
+    const head = el('div', { class: 'p-head' },
+      el('div', { class: 'p-name' },
+        el('span', { class: 'p-dot' }),
+        el('span', { class: 'p-label' }, p.name),
+      ),
+      el('span', { class: 'p-status', 'data-state': p.status },
+        p.status === 'processing' ? 'processando' :
+        p.status === 'streaming'  ? 'streaming'    : 'concluído'
+      ),
+    );
+
+    let body;
+    if (p.status === 'processing') {
+      body = el('div', { class: 'p-dots' },
+        el('span', { class: 'd', style: `animation-delay: ${m.offset}` }),
+        el('span', { class: 'd', style: `animation-delay: calc(${m.offset} + 0.18s)` }),
+        el('span', { class: 'd', style: `animation-delay: calc(${m.offset} + 0.36s)` }),
+      );
+    } else if (p.status === 'streaming') {
+      body = el('div', { class: 'p-body' });
+      body.textContent = p.text;
+      body.append(el('span', { class: 'p-cursor' }));
+    } else {
+      body = el('div', { class: 'p-body' }, p.text);
+    }
+
+    const children = [head, body];
+    if (p.status === 'done') {
+      children.push(
+        el('div', { class: 'p-foot' },
+          el('button', {}, 'copiar'),
+          el('button', {}, 'repetir'),
+          el('button', {}, 'baixar'),
+        )
+      );
+    }
+    grid.append(el('div', { class: 'panel', style: `animation-delay: ${i * 40}ms` }, ...children));
+  });
+
+  // status text in topbar
+  const proc = state.panels.filter(p => p.status !== 'done').length;
+  const done = state.panels.filter(p => p.status === 'done').length;
+  $('#tb-status').textContent = `${proc} ${proc === 1 ? 'processando' : 'a processar'} · ${done} ${done === 1 ? 'concluída' : 'concluídas'}`;
+}
+
+// ── synthesis render ──────────────────────────────────────────────────────
+
+function renderSynth() {
+  const mount = $('#synth-mount');
+  mount.innerHTML = '';
+  const allDone = state.panels.every(p => p.status === 'done');
+  if (!allDone) return;
+
+  const head = el('div', { class: 'synth-head' },
+    el('div', { class: 'synth-title' },
+      el('span', { class: 'lbl' }, 'Síntese'),
+      el('span', { class: 'synth-badge' }, 'gerado por Claude'),
+    ),
+    el('div', { class: 'synth-actions' },
+      el('button', { class: 'exp' }, 'MD'),
+      el('button', { class: 'exp' }, 'EPUB'),
+      el('button', { class: 'exp' }, 'JSON'),
+      el('button', { class: 'save' }, 'Guardar sessão'),
+    ),
+  );
+
+  const blocks = SYNTHESIS.map(b =>
+    el('div', { class: 'synth-block' },
+      el('div', { class: 'synth-block-label' }, b.label),
+      el('div', { class: 'synth-block-body' }, b.body),
+    )
+  );
+
+  mount.append(el('div', { class: 'synth' }, head, ...blocks));
+}
+
+// ── arena render ──────────────────────────────────────────────────────────
+
+function renderArena() {
+  $('#query-bubble').textContent = `"${state.query}"`;
+  renderGrid();
+  renderSynth();
+}
+
+// ── biblioteca render ─────────────────────────────────────────────────────
+
+function renderLibrary() {
+  const grid = $('#lib-grid');
+  grid.innerHTML = '';
+  const q = state.libQuery.toLowerCase();
+  const filtered = SESSIONS.filter(s =>
+    (state.libFilter === 'all' || s.mode === state.libFilter) &&
+    (!q || (s.title + ' ' + s.preview).toLowerCase().includes(q))
+  );
+  if (!filtered.length) {
+    grid.append(el('div', { class: 'lib-empty' }, 'Sem resultados.'));
+    return;
+  }
+  for (const s of filtered) {
+    grid.append(
+      el('div', { class: 'lib-card', onclick: () => goto('arena') },
+        el('div', { class: 'lib-card-title' }, s.title),
+        el('div', { class: 'lib-card-when' }, s.when),
+        el('div', { class: 'lib-card-badges' },
+          el('span', { class: 'b' }, s.mode),
+          el('span', { class: 'b' }, `${s.voices} vozes`),
+        ),
+        el('div', { class: 'lib-card-preview' }, s.preview),
+        el('div', { class: 'lib-card-foot' },
+          el('button', {}, 'exportar'),
+          el('button', {}, 'apagar'),
+        ),
+      )
+    );
+  }
+}
+
+// ── configuração render ───────────────────────────────────────────────────
+
+function configRowKey(m, on) {
+  return el('div', { class: 'cfg-row' },
+    el('span', { class: 'p-dot', style: 'background: var(--fg)' }),
+    el('span', { class: 'cfg-key-name' }, m.name),
+    el('input', { type: 'password', placeholder: 'sk-••••••••••' }),
+    el('button', { class: 'cfg-rever' }, 'Rever'),
+    el('span', { class: 'cfg-state', 'data-on': String(on) }, on ? 'activa' : 'em falta'),
+  );
+}
+
+function selectField(options, value, onchange) {
+  const sel = el('select', { class: 'cfg-select' });
+  for (const o of options) {
+    const opt = el('option', { value: o }, o);
+    if (o === value) opt.selected = true;
+    sel.append(opt);
+  }
+  sel.addEventListener('change', e => onchange && onchange(e.target.value));
+  return sel;
+}
+
+function toggleGroup(options, value, onchange) {
+  const wrap = el('div', { class: 'cfg-toggle-group' });
+  for (const o of options) {
+    wrap.append(el('button', {
+      'data-active': String(o === value),
+      onclick: () => onchange && onchange(o),
+    }, String(o) + (typeof o === 'number' ? '×' : '')));
+  }
+  return wrap;
+}
+
+function renderConfig() {
+  const mount = $('#cfg-mount');
+  mount.innerHTML = '';
+
+  // group A — chaves de API
+  const apiKeys = [
+    ['Claude', true], ['ChatGPT', true], ['Gemini', true], ['Grok', true],
+    ['Perplexity', true], ['DeepSeek', false], ['Mistral', true], ['Cohere', false],
+  ];
+  const groupA = el('div', { class: 'cfg-group' },
+    el('div', { class: 'cfg-group-label' }, 'Chaves de API'),
+    ...apiKeys.map(([name, on]) => configRowKey({ name }, on)),
+  );
+
+  // group B — preferências
+  const groupB = el('div', { class: 'cfg-group' },
+    el('div', { class: 'cfg-group-label' }, 'Preferências'),
+    prefRow('Modelo de síntese', 'Voz responsável por unificar respostas.',
+      selectField(['Claude','ChatGPT','Gemini','Grok','Perplexity','DeepSeek','Mistral','Cohere'], 'Claude')),
+    prefRow('Velocidade de streaming', 'ms por caractere — menor é mais rápido.',
+      sliderField()),
+    prefRow('Escala por defeito', 'Densidade inicial da arena.',
+      toggleGroup([2,4,8], state.density, v => { state.density = v; renderArena(); syncDensityButtons(); })),
+    prefRow('Modo por defeito', 'Aplicado a cada nova arena.',
+      selectField(MODES.map(m => '/' + m.label), '/' + activeMode().label, v => {
+        const found = MODES.find(m => '/' + m.label === v);
+        if (found) { state.mode = found.id; syncMode(); }
+      })),
+  );
+
+  // group C — dados locais
+  const groupC = el('div', { class: 'cfg-group' },
+    el('div', { class: 'cfg-group-label' }, 'Dados locais'),
+    el('div', { class: 'cfg-data-line' },
+      el('span', { class: 'info' }, 'Sessões guardadas: ', el('span', {}, '47')),
+      el('button', {}, 'Exportar tudo'),
+    ),
+    el('div', { class: 'cfg-data-line' },
+      el('span', { class: 'info' }, 'Base de dados: ', el('span', {}, '12.4 MB')),
+      el('button', {}, 'Limpar cache'),
+    ),
+  );
+
+  mount.append(groupA, groupB, groupC);
+}
+
+function prefRow(label, hint, control) {
+  return el('div', { class: 'cfg-row' },
+    el('div', { style: 'flex:1' },
+      el('div', { class: 'cfg-pref-label' }, label),
+      el('div', { class: 'cfg-pref-hint' }, hint),
+    ),
+    el('div', {}, control),
+  );
+}
+
+function sliderField() {
+  const range = el('input', { type: 'range', min: 6, max: 60, step: 2, value: String(state.streamSpeed) });
+  const lbl = el('span', { class: 'lbl' }, state.streamSpeed + 'ms');
+  range.addEventListener('input', e => {
+    state.streamSpeed = +e.target.value;
+    lbl.textContent = state.streamSpeed + 'ms';
+  });
+  return el('div', { class: 'cfg-slider' },
+    el('span', { class: 'lbl', style: 'min-width:40px; text-align:left' }, 'Lento'),
+    range,
+    el('span', { class: 'lbl' }, 'Rápido'),
+    lbl,
+  );
+}
+
+function activeMode() { return MODES.find(m => m.id === state.mode) || MODES[1]; }
+
+// ── mode popover ──────────────────────────────────────────────────────────
+
+function openModePopover() {
+  const overlay = $('#mode-overlay');
+  const pop = $('#mode-popover');
+  pop.innerHTML = '';
+  for (const m of MODES) {
+    pop.append(
+      el('div', { class: 'pop-opt', 'data-active': String(m.id === state.mode), onclick: () => {
+        state.mode = m.id; syncMode(); closeModePopover();
+      } },
+        el('div', { class: 'pop-name' }, el('span', { class: 'slash' }, '/'), m.label),
+        el('div', { class: 'pop-desc' }, m.desc),
+      )
+    );
+  }
+  const btn = $('#mode-btn');
+  const r = btn.getBoundingClientRect();
+  pop.style.setProperty('--pop-top', (r.bottom + 8) + 'px');
+  pop.style.setProperty('--pop-left', r.left + 'px');
+  overlay.hidden = false;
+  btn.dataset.open = 'true';
+}
+function closeModePopover() {
+  $('#mode-overlay').hidden = true;
+  $('#mode-btn').dataset.open = 'false';
+}
+
+// ── theme + collapse + notes ──────────────────────────────────────────────
+
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.theme);
+  $('#theme-label').textContent = state.theme === 'dark' ? 'Tema claro' : 'Tema escuro';
+}
+function applyCollapse() {
+  $('#app').dataset.collapsed = state.collapsed;
+  // rotate chevron
+  const ic = $('#collapse-ic svg');
+  if (ic) ic.style.transform = state.collapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+  ic.style.transition = 'transform 0.2s ease';
+}
+function applyNotes() {
+  $('#app').dataset.notes = state.notesOpen;
+}
+
+// ── nav / view switching ──────────────────────────────────────────────────
+
+function goto(view) {
+  state.view = view;
+  $$('.screen').forEach(s => s.dataset.active = String(s.dataset.id === view));
+  $$('.sb-row[data-nav]').forEach(r => r.dataset.active = String(r.dataset.nav === view));
+  if (view === 'library') renderLibrary();
+  if (view === 'config')  renderConfig();
+}
+
+// ── density ───────────────────────────────────────────────────────────────
+
+function syncDensityButtons() {
+  $$('.tb-density button').forEach(b => b.dataset.active = String(+b.dataset.d === state.density));
+}
+function syncMode() {
+  $('#mode-label').textContent = activeMode().label;
+}
+
+// ── streaming simulation ──────────────────────────────────────────────────
+
+function runSimulation(query) {
+  clearAllTimers();
+  state.running = true;
+  state.query = query;
+
+  // reset all to processing
+  state.panels = MODELS.map(m => ({ id: m.id, name: m.name, status: 'processing', text: '' }));
+  renderArena();
+
+  state.panels.forEach((p, i) => {
+    const startDelay = 800 + Math.random() * 1200;
+    const fullText = RESPONSES[p.id];
+    const charDelay = state.streamSpeed + (i % 3) * 4;
+
+    timers.push(setTimeout(() => {
+      // start streaming
+      state.panels[i].status = 'streaming';
+      renderArena();
+
+      // stream char by char
+      for (let k = 1; k <= fullText.length; k++) {
+        timers.push(setTimeout(() => {
+          state.panels[i].text = fullText.slice(0, k);
+          renderGrid(); // light re-render of grid only
+        }, k * charDelay));
+      }
+      // mark done
+      timers.push(setTimeout(() => {
+        state.panels[i].status = 'done';
+        state.panels[i].text = fullText;
+        renderArena();
+      }, fullText.length * charDelay + 120));
+    }, startDelay));
+  });
+}
+
+// ── boot / wire events ────────────────────────────────────────────────────
+
+function boot() {
+  // sidebar
+  renderHistory();
+  renderChips();
+  renderArena();
+  syncMode();
+
+  // nav
+  $$('.sb-row[data-nav]').forEach(r => r.addEventListener('click', () => goto(r.dataset.nav)));
+
+  // density
+  $$('.tb-density button').forEach(b => b.addEventListener('click', () => {
+    state.density = +b.dataset.d;
+    syncDensityButtons();
+    renderGrid();
+  }));
+
+  // mode
+  $('#mode-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    if ($('#mode-btn').dataset.open === 'true') closeModePopover();
+    else openModePopover();
+  });
+  $('#mode-overlay').addEventListener('click', e => {
+    if (e.target === $('#mode-overlay')) closeModePopover();
+  });
+
+  // input
+  const submit = () => {
+    const v = $('#in-field').value.trim();
+    if (!v) return;
+    runSimulation(v);
+    $('#in-field').value = '';
+  };
+  $('#in-send').addEventListener('click', submit);
+  $('#in-field').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); submit(); }
+  });
+
+  // theme + collapse
+  $('#theme-toggle').addEventListener('click', () => {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    applyTheme();
+  });
+  $('#collapse-toggle').addEventListener('click', () => {
+    state.collapsed = !state.collapsed;
+    applyCollapse();
+  });
+
+  // notes
+  $('#notes-toggle').addEventListener('click', () => { state.notesOpen = true; applyNotes(); });
+  $('#notes-close').addEventListener('click', () => { state.notesOpen = false; applyNotes(); });
+  $('#notes-body').value =
+    'Insight: nenhum modelo apresentou contra-mecanismos. Próxima iteração — pedir prescrições.\n\n' +
+    'Rever Bourdieu sobre violência simbólica.';
+
+  // library search + filters
+  $('#lib-search').addEventListener('input', e => { state.libQuery = e.target.value; renderLibrary(); });
+  $$('#lib-filters button').forEach(b => b.addEventListener('click', () => {
+    state.libFilter = b.dataset.f;
+    $$('#lib-filters button').forEach(x => x.dataset.active = String(x === b));
+    renderLibrary();
+  }));
+
+  // shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModePopover();
+    if ((e.metaKey || e.ctrlKey) && e.key === '\\') { state.collapsed = !state.collapsed; applyCollapse(); }
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault(); $('#in-field').focus();
+    }
+  });
+
+  applyTheme();
+  applyCollapse();
+  applyNotes();
+}
+
+boot();
+</script>
+</body>
+</html>

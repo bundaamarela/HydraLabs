@@ -1,0 +1,21 @@
+1. as vezes os comando ou toques da cat epub, nao respodem(so voltam em caso de varias tentativas ou reniciar: No leitor
+←
+/
+→
+Página anterior / seguinte
+Espaço
+Mostrar / ocultar interface
+H
+Destacar selecção a amarelo
+N
+Painel de notas
+B
+Adicionar marcador
+F
+Activar / desactivar modo foco
+T
+Activar / parar leitura em voz alta
+Esc
+Fechar painéis / cancelar selecção)
+2. o scroll, pensei que o scroll era guia de leitura de forma vertical( o que ta bem e a paginacao que e horizontal).
+3. de momento e so isso, tudo ta otimo, tirando certas parte que nao estao funiconal  por parecer mais ser mockups. nao testei em tablet nem em mobile por nao ter acesso, entao nao sei dizer.
