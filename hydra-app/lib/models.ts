@@ -16,7 +16,7 @@ export type ModelId =
   | 'zai'
   | 'manus';
 
-export type ModeId = 'rapido' | 'raciocinio' | 'pesquisa' | 'investigacao';
+export type ModeId = 'rapido' | 'raciocinio' | 'pesquisa' | 'investigacao' | 'sintese';
 
 export interface ModelConfig {
   id: ModelId;
@@ -124,6 +124,8 @@ export const SYSTEM_PROMPTS: Record<ModeId, string> = {
     'Prioriza factos verificáveis. Indica fontes e estudos quando relevante. Distingue consenso de controvérsia.',
   investigacao:
     'Analisa em profundidade. Identifica pressupostos, contradições, lacunas e perspectivas alternativas. Não simplifiques.',
+  sintese:
+    'És um sintetizador preciso de respostas de múltiplas IAs. A tua única função é sintetizar com rigor.',
 };
 
 export const MODE_LABELS: Record<ModeId, string> = {
@@ -131,6 +133,7 @@ export const MODE_LABELS: Record<ModeId, string> = {
   raciocinio:   '/Raciocínio',
   pesquisa:     '/Pesquisa',
   investigacao: '/Investigação',
+  sintese:      '/Síntese',
 };
 
 export const MODE_DESCRIPTIONS: Record<ModeId, { desc: string; hint: string }> = {
@@ -138,4 +141,5 @@ export const MODE_DESCRIPTIONS: Record<ModeId, { desc: string; hint: string }> =
   raciocinio:   { desc: 'Cadeia de pensamento. Respostas exaustivas.', hint: 'pensa antes'   },
   pesquisa:     { desc: 'Grounding factual. Fontes priorizadas.',       hint: 'web · papers'  },
   investigacao: { desc: 'Análise profunda. Pressupostos mapeados.',     hint: 'profundo'      },
+  sintese:      { desc: 'Síntese automática das 8 vozes.',              hint: 'interno'       },
 };

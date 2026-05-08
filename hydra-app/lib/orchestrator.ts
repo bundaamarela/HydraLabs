@@ -34,18 +34,20 @@ export async function orchestrate(
   await Promise.allSettled(
     activeModels.map(async (modelConfig) => {
       try {
-        const result = await withTimeout(
-          streamText({
-            model: modelConfig.getModel(),
-            system: systemPrompt,
-            messages: [{ role: 'user', content: query }],
-          }),
+        const result = streamText({
+          model: modelConfig.getModel(),
+          system: systemPrompt,
+          messages: [{ role: 'user', content: query }],
+        });
+
+        await withTimeout(
+          (async () => {
+            for await (const chunk of result.textStream) {
+              onToken({ model: modelConfig.id, token: chunk });
+            }
+          })(),
           TIMEOUT_MS,
         );
-
-        for await (const chunk of result.textStream) {
-          onToken({ model: modelConfig.id, token: chunk });
-        }
 
         onToken({ model: modelConfig.id, done: true });
       } catch (err) {

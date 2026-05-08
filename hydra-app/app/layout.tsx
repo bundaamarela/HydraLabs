@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { AppProvider } from './providers';
+import { AppShell } from './AppShell';
 
 export const metadata: Metadata = {
   title: 'Hydra Labs',
@@ -13,7 +15,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt" data-theme="dark">
-      <body>{children}</body>
+      <body>
+        <AppProvider>
+          <AppShell>{children}</AppShell>
+        </AppProvider>
+      </body>
     </html>
   );
 }

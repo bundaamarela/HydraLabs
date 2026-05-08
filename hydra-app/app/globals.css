@@ -2,93 +2,93 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── design tokens ─────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════
+   HYDRA LABS · design tokens
+   ══════════════════════════════════════════════════════════════ */
+
 :root {
-  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
-
-  --bg:        #0C0B09;
-  --bg2:       #161410;
-  --bg3:       #1E1C18;
+  /* dark (default) */
+  --surface:   #0C0B09;
+  --surface-2: #161410;
+  --surface-3: #1E1C18;
   --border:    #2A2824;
-  --fg:        #F4EFE3;
-  --fg-muted:  #8A8480;
-  --fg-faint:  #4A463F;
-  --fg-quote:  #B0A898;
-  --ok:        #7A8A6A;
+  --cream:     #F4EFE3;
+  --cream-2:   #EAE4D6;
+  --ink:       #1A1714;
+  --ink-2:     #3A3530;
+  --fg-muted:  #7A756E;
+  --fg-faint:  #4A4840;
+  --ok:        #7A9A6A;
+  --err:       #C0705A;
 
-  --panel-bg:   #F4EFE3;
-  --panel-bg2:  #EAE4D6;
-  --panel-fg:   #1A1714;
-  --panel-fg2:  #3A3530;
-  --panel-mut:  #7A756E;
-  --panel-line: #EAE4D6;
-
-  --r-panel: 12px;
-  --r-input: 14px;
-  --r-pill:  20px;
-  --r-btn:   8px;
-  --r-card:  10px;
-  --hair: 0.5px solid var(--border);
+  --sb-w:  220px;
+  --nt-w:  0px;
 }
 
 [data-theme='light'] {
-  --bg:        #F4EFE3;
-  --bg2:       #EAE4D6;
-  --bg3:       #DDD8CC;
+  --surface:   #F4EFE3;
+  --surface-2: #EAE4D6;
+  --surface-3: #DDD8CC;
   --border:    #C8C2B4;
-  --fg:        #1A1714;
-  --fg-muted:  #7A756E;
-  --fg-faint:  #A39E94;
-  --fg-quote:  #6E685E;
-  --ok:        #4F6B40;
-
-  --panel-bg:   #0C0B09;
-  --panel-bg2:  #161410;
-  --panel-fg:   #F4EFE3;
-  --panel-fg2:  #D8D2C4;
-  --panel-mut:  #8A847A;
-  --panel-line: #2A2824;
+  --cream:     #0C0B09;
+  --cream-2:   #161410;
+  --ink:       #F4EFE3;
+  --ink-2:     #D8D2C4;
+  --fg-muted:  #8A8478;
+  --fg-faint:  #9A948A;
+  --ok:        #4F7A40;
+  --err:       #A04040;
 }
 
+/* ── base ──────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
 body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--font);
+  background: var(--surface);
+  color: var(--cream);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'Helvetica Neue', sans-serif;
   font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   letter-spacing: -0.1px;
+  overflow-x: hidden;
+}
+button {
+  font: inherit; color: inherit;
+  background: none; border: none; padding: 0; cursor: pointer;
+}
+input, textarea, select { font: inherit; color: inherit; }
+input::placeholder, textarea::placeholder { color: var(--fg-faint); }
+:focus-visible {
+  outline: 1px solid var(--fg-muted);
+  outline-offset: 2px; border-radius: 3px;
+}
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3); border-radius: 2px;
 }
 
-/* scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
-
-/* focus */
-:focus-visible { outline: 1px solid var(--fg-muted); outline-offset: 2px; border-radius: 4px; }
-
-/* panel streaming animation */
+/* ── keyframes ─────────────────────────────────────────────── */
 @keyframes panelIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes dotpulse {
-  0%, 60%, 100% { transform: scale(1); opacity: 0.25; }
-  30%            { transform: scale(1.5); opacity: 0.9; }
+  0%, 60%, 100% { transform: scale(1);   opacity: 0.25; }
+  30%            { transform: scale(1.5); opacity: 0.9;  }
 }
-
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
 }
-
 @keyframes popIn {
-  from { opacity: 0; transform: scale(0.985) translateY(-4px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from { opacity: 0; transform: scale(0.97) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0);    }
 }
