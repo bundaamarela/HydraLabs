@@ -5,64 +5,64 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Hydra Labs</title>
 <style>
-/* ═══════════════════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════════════
    HYDRA LABS · monochromatic system · zero frameworks
-   ─────────────────────────────────────────────────────────────────────────── */
+   ══════════════════════════════════════════════════════════════════════ */
 
-/* ── tokens ─────────────────────────────────────────────────────────── */
+/* ── design tokens ─────────────────────────────────────────────────── */
 :root {
-  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  --font:      -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
 
-  /* dark (default) ─ chrome */
-  --bg: #0C0B09;
-  --bg2: #161410;
-  --bg3: #1E1C18;
-  --border: #2A2824;
-  --fg: #F4EFE3;
-  --muted: #7A756E;
-  --muted2: #4A4840;
-  --ok: #7A9A6A;
+  /* dark (default) — chrome is near-black, panels are cream */
+  --bg:        #0C0B09;   /* --surface   */
+  --bg2:       #161410;   /* --surface-2 */
+  --bg3:       #1E1C18;   /* --surface-3 */
+  --border:    #2A2824;
+  --fg:        #F4EFE3;
+  --fg-muted:  #8A8480;
+  --fg-faint:  #4A463F;
+  --fg-quote:  #B0A898;
+  --ok:        #7A8A6A;
 
-  /* dark ─ panels (cream) */
-  --panel-bg: #F4EFE3;
-  --panel-bg2: #EAE4D6;
-  --panel-bg3: #D8D2C4;
-  --panel-fg: #1A1714;
-  --panel-fg2: #3A3530;
-  --panel-muted: #7A756E;
+  /* cream — panel surfaces */
+  --panel-bg:   #F4EFE3;  /* --cream   */
+  --panel-bg2:  #EAE4D6;  /* --cream-2 */
+  --panel-fg:   #1A1714;  /* --ink     */
+  --panel-fg2:  #3A3530;  /* --ink-2   */
+  --panel-mut:  #7A756E;
   --panel-line: #EAE4D6;
 
-  /* shared */
-  --r-panel: 10px;
-  --r-card: 10px;
-  --r-btn: 8px;
-  --r-chip: 20px;
-  --hairline: 0.5px solid var(--border);
+  /* radii */
+  --r-panel: 12px;
+  --r-input: 14px;
+  --r-pill:  20px;
+  --r-btn:   8px;
+  --r-card:  10px;
+
+  --hair: 0.5px solid var(--border);
 }
 
 [data-theme="light"] {
-  /* light ─ chrome (cream becomes background) */
-  --bg: #F4EFE3;
-  --bg2: #EAE4D6;
-  --bg3: #DDD8CC;
-  --border: #C8C2B4;
-  --fg: #1A1714;
-  --muted: #7A756E;
-  --muted2: #A39E94;
-  --ok: #4F6B40;
+  --bg:        #F4EFE3;
+  --bg2:       #EAE4D6;
+  --bg3:       #DDD8CC;
+  --border:    #C8C2B4;
+  --fg:        #1A1714;
+  --fg-muted:  #7A756E;
+  --fg-faint:  #A39E94;
+  --fg-quote:  #6E685E;
+  --ok:        #4F6B40;
 
-  /* light ─ panels invert to dark */
-  --panel-bg: #0C0B09;
-  --panel-bg2: #161410;
-  --panel-bg3: #1E1C18;
-  --panel-fg: #F4EFE3;
-  --panel-fg2: #D8D2C4;
-  --panel-muted: #8A847A;
+  --panel-bg:   #0C0B09;
+  --panel-bg2:  #161410;
+  --panel-fg:   #F4EFE3;
+  --panel-fg2:  #D8D2C4;
+  --panel-mut:  #8A847A;
   --panel-line: #2A2824;
 }
 
-/* ── reset + base ───────────────────────────────────────────────────── */
+/* ── reset + base ──────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
 body {
@@ -78,235 +78,255 @@ body {
 }
 button { font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: pointer; }
 input, textarea, select { font: inherit; color: inherit; }
-input::placeholder, textarea::placeholder { color: var(--muted2); }
-::selection { background: rgba(244,239,227,0.18); color: var(--fg); }
-[data-theme="light"] ::selection { background: rgba(26,23,20,0.16); color: var(--fg); }
-.panel ::selection { background: rgba(26,23,20,0.16); color: var(--panel-fg); }
-[data-theme="light"] .panel ::selection { background: rgba(244,239,227,0.18); color: var(--panel-fg); }
+input::placeholder, textarea::placeholder { color: var(--fg-faint); }
+::selection { background: rgba(244,239,227,.18); color: var(--fg); }
+[data-theme="light"] ::selection { background: rgba(26,23,20,.16); color: var(--fg); }
+.panel ::selection { background: rgba(26,23,20,.16); color: var(--panel-fg); }
+[data-theme="light"] .panel ::selection { background: rgba(244,239,227,.18); color: var(--panel-fg); }
 
-/* ── app shell ──────────────────────────────────────────────────────── */
+/* ── app shell ─────────────────────────────────────────────────────── */
 .app {
   display: grid;
-  grid-template-columns: var(--sidebar-w, 220px) 1fr var(--notes-w, 0px);
+  grid-template-columns: var(--sb-w, 220px) 1fr var(--nt-w, 0px);
   height: 100vh;
-  transition: grid-template-columns 0.2s ease;
+  transition: grid-template-columns .2s ease;
 }
-.app[data-collapsed="true"]  { --sidebar-w: 52px; }
-.app[data-notes="true"]      { --notes-w: 280px; }
+.app[data-sb="true"]  { --sb-w: 52px; }
+.app[data-nt="true"]  { --nt-w: 280px; }
 
-/* ═══════════════════════ SIDEBAR ════════════════════════════════════ */
+/* ══════════════════════ SIDEBAR ══════════════════════════════════════ */
 .sidebar {
   background: var(--bg2);
-  border-right: var(--hairline);
+  border-right: var(--hair);
   display: flex; flex-direction: column;
-  min-width: 0;
-  overflow: hidden;
+  min-width: 0; overflow: hidden;
+  z-index: 30;
 }
+
 .sb-brand {
-  display: flex; align-items: center; gap: 9px;
-  padding: 14px 14px 14px;
-  border-bottom: var(--hairline);
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 14px;
+  border-bottom: var(--hair);
   min-height: 48px;
+  white-space: nowrap;
 }
 .sb-mark {
-  flex: 0 0 auto;
-  width: 24px; height: 24px;
-  border-radius: 6px;
-  background: var(--fg);
+  flex: 0 0 16px; width: 16px; height: 16px;
+  position: relative;
   display: flex; align-items: center; justify-content: center;
 }
-.sb-mark svg { display: block; }
-.sb-mark svg .stroke { stroke: var(--bg); }
+.sb-mark .dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--fg);
+  position: relative; z-index: 1;
+}
+.sb-mark .ring {
+  position: absolute; inset: 0;
+  border: 0.5px solid var(--fg-muted);
+  border-radius: 50%; opacity: .4;
+}
 .sb-name {
   font-size: 13px; font-weight: 500;
-  color: var(--fg);
-  letter-spacing: -0.4px;
-  white-space: nowrap;
-  opacity: 1;
-  transition: opacity 0.15s;
+  color: var(--fg); letter-spacing: -0.4px;
+  transition: opacity .15s;
 }
-.app[data-collapsed="true"] .sb-name,
-.app[data-collapsed="true"] .sb-row-label,
-.app[data-collapsed="true"] .sb-meta,
-.app[data-collapsed="true"] .sb-section,
-.app[data-collapsed="true"] .sb-history { opacity: 0; pointer-events: none; }
+
+/* collapse hides text labels */
+.app[data-sb="true"] .sb-name,
+.app[data-sb="true"] .sb-row-lbl,
+.app[data-sb="true"] .sb-meta,
+.app[data-sb="true"] .sb-section-lbl,
+.app[data-sb="true"] .sb-history-wrap { opacity: 0; pointer-events: none; }
 
 /* nav */
 .sb-nav {
   padding: 8px 8px 10px;
-  border-bottom: var(--hairline);
+  border-bottom: var(--hair);
   display: flex; flex-direction: column; gap: 1px;
 }
 .sb-row {
   display: flex; align-items: center; gap: 10px;
-  padding: 8px 10px;
+  padding: 0 10px; height: 34px;
   border-radius: 7px;
-  color: var(--muted);
-  cursor: pointer;
-  user-select: none;
+  color: var(--fg-muted); cursor: pointer;
   white-space: nowrap;
-  transition: background 0.12s, color 0.12s;
+  transition: background .12s, color .12s;
 }
+.app[data-sb="true"] .sb-row { justify-content: center; padding: 0; }
 .sb-row .ic {
-  flex: 0 0 16px;
-  width: 16px; height: 16px;
+  flex: 0 0 16px; width: 16px; height: 16px;
   display: flex; align-items: center; justify-content: center;
 }
 .sb-row .ic svg { stroke: currentColor; fill: none; stroke-width: 1; }
-.sb-row-label { font-size: 12px; font-weight: 500; letter-spacing: -0.1px; }
+.sb-row-lbl { font-size: 12px; font-weight: 500; letter-spacing: -0.1px; }
 .sb-row:hover { background: var(--bg3); color: var(--fg); }
-.sb-row[data-active="true"] {
-  background: var(--fg);
-  color: var(--bg);
+.sb-row[data-active="true"] { background: var(--fg); color: var(--bg); }
+
+/* sessions header */
+.sb-sessions-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px 6px;
 }
+.sb-sessions-hd span {
+  font-size: 9px; font-weight: 500;
+  color: var(--fg-faint); letter-spacing: 0.6px; text-transform: uppercase;
+}
+.sb-sessions-hd button {
+  color: var(--fg-muted); padding: 3px;
+  border-radius: 4px; display: inline-flex;
+  transition: color .12s, background .12s;
+}
+.sb-sessions-hd button:hover { background: var(--bg3); color: var(--fg); }
 
 /* history */
-.sb-history {
+.sb-history-wrap {
   flex: 1; overflow-y: auto;
-  padding: 14px 8px 14px;
-  scrollbar-width: none;
+  padding: 2px 8px 10px;
+  scrollbar-width: none; min-height: 0;
 }
-.sb-history::-webkit-scrollbar { display: none; }
-.sb-section {
-  padding: 12px 10px 6px;
+.sb-history-wrap::-webkit-scrollbar { display: none; }
+.sb-group-lbl {
   font-size: 9px; font-weight: 500;
-  color: var(--muted2);
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
+  color: var(--fg-faint); letter-spacing: 0.6px; text-transform: uppercase;
+  padding: 10px 5px 4px;
 }
-.sb-section:first-child { padding-top: 2px; }
+.sb-group-lbl:first-child { padding-top: 4px; }
 .sb-item {
-  padding: 7px 10px;
-  border-radius: 7px;
-  cursor: pointer;
-  transition: background 0.12s;
+  padding: 7px 9px; border-radius: 6px;
+  cursor: pointer; margin-bottom: 1px;
+  transition: background .12s;
 }
 .sb-item:hover { background: var(--bg3); }
 .sb-item-title {
-  font-size: 11.5px;
-  color: var(--fg);
+  font-size: 11.5px; color: var(--fg);
   letter-spacing: -0.1px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   margin-bottom: 2px;
 }
 .sb-meta {
-  font-size: 10px;
-  color: var(--muted);
+  font-size: 10px; color: var(--fg-faint);
   letter-spacing: 0.1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+
+/* spacer when collapsed */
+.sb-flex-1 { flex: 1; }
 
 /* footer */
 .sb-foot {
   padding: 8px;
-  border-top: var(--hairline);
+  border-top: var(--hair);
   display: flex; flex-direction: column; gap: 1px;
 }
+.sb-foot .sb-row { height: 32px; }
 
-/* ═══════════════════════ MAIN ══════════════════════════════════════ */
+/* ══════════════════════ MAIN ═════════════════════════════════════════ */
 .main {
   display: flex; flex-direction: column;
-  min-width: 0; min-height: 0;
-  position: relative;
+  min-width: 0; min-height: 0; position: relative;
 }
+
 .topbar {
   height: 48px; flex: 0 0 48px;
-  background: var(--bg2);
-  border-bottom: var(--hairline);
+  background: var(--bg2); border-bottom: var(--hair);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 16px;
-  z-index: 5;
+  padding: 0 16px; z-index: 5;
 }
 .tb-mode {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 5px 12px;
-  background: var(--bg3);
-  border: var(--hairline);
-  border-radius: var(--r-chip);
-  color: var(--muted);
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px;
+  background: var(--bg3); border: var(--hair);
+  border-radius: var(--r-pill);
+  color: var(--fg-muted);
   font-size: 10px; font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  transition: background 0.12s, color 0.12s;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  transition: background .12s, color .12s;
 }
-.tb-mode .slash { opacity: 0.55; }
-.tb-mode:hover { background: var(--fg); color: var(--bg); border-color: transparent; }
-.tb-mode[data-open="true"] { background: var(--fg); color: var(--bg); border-color: transparent; }
+.tb-mode:hover, .tb-mode[data-open="true"] {
+  background: var(--fg); color: var(--bg); border-color: transparent;
+}
+.tb-slash { opacity: .55; }
 
 .tb-right { display: flex; align-items: center; gap: 8px; }
 .tb-status {
-  font-size: 10px; color: var(--muted);
-  letter-spacing: 0.1px;
-  margin-right: 6px;
+  font-size: 10px; color: var(--fg-faint);
+  letter-spacing: 0.2px; margin-right: 6px;
 }
 .tb-density { display: inline-flex; gap: 4px; }
 .tb-density button {
-  font-size: 10.5px; font-weight: 500;
-  padding: 5px 10px;
-  border-radius: 6px;
-  background: var(--bg3);
-  border: var(--hairline);
-  color: var(--muted);
+  font-size: 11px; font-weight: 500;
+  padding: 4px 11px; border-radius: 6px;
+  background: var(--bg3); border: var(--hair);
+  color: var(--fg-muted);
   letter-spacing: 0.1px;
-  transition: background 0.12s, color 0.12s;
+  transition: background .12s, color .12s;
 }
 .tb-density button:hover { color: var(--fg); }
 .tb-density button[data-active="true"] {
   background: var(--fg); color: var(--bg); border-color: transparent;
 }
 
-/* ── screen container ───────────────────────────────────────────────── */
+/* ── screens ───────────────────────────────────────────────────────── */
 .screens {
-  flex: 1; min-height: 0;
-  position: relative;
+  flex: 1; min-height: 0; position: relative;
 }
 .screen {
   position: absolute; inset: 0;
-  overflow-y: auto;
-  display: none;
+  overflow-y: auto; display: none;
 }
 .screen[data-active="true"] { display: block; }
-.screen-inner { max-width: 1180px; margin: 0 auto; padding: 14px 16px 0; }
-.screen[data-id="arena"] .screen-inner { padding-bottom: 200px; }
+.screen-inner {
+  max-width: 1180px; margin: 0 auto;
+  padding: 14px 16px 0;
+}
+.screen[data-id="arena"]   .screen-inner { padding-bottom: 200px; }
 .screen[data-id="library"] .screen-inner,
-.screen[data-id="config"]  .screen-inner { padding: 28px 24px 80px; max-width: 1100px; }
+.screen[data-id="config"]  .screen-inner {
+  padding: 36px 28px 80px; max-width: 960px;
+}
 
-/* ═══════════════════════ ARENA ═════════════════════════════════════ */
+/* ── screen common header ───────────────────────────────────────────── */
+.screen-head { margin-bottom: 28px; }
+.screen-overline {
+  font-size: 9px; font-weight: 500;
+  color: var(--fg-faint); letter-spacing: 0.6px; text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.screen-title {
+  margin: 0 0 8px; font-size: 28px; font-weight: 500;
+  color: var(--fg); letter-spacing: -0.6px;
+}
+.screen-sub {
+  margin: 0; font-size: 13px; color: var(--fg-muted);
+  letter-spacing: -0.1px; line-height: 1.6;
+}
+
+/* ══════════════════════ ARENA ════════════════════════════════════════ */
 .query-bubble {
-  background: var(--bg2);
-  border: var(--hairline);
-  border-radius: var(--r-panel);
-  padding: 9px 13px;
-  margin-bottom: 13px;
-  font-size: 12px;
-  color: #A8A098;
-  line-height: 1.55;
-  letter-spacing: -0.1px;
+  background: var(--bg2); border: var(--hair);
+  border-radius: var(--r-card);
+  padding: 11px 16px; margin-bottom: 14px;
+  font-size: 13px; color: var(--fg-quote);
+  line-height: 1.5; letter-spacing: -0.1px;
 }
-[data-theme="light"] .query-bubble { color: #6E685E; }
 
-.grid {
-  display: grid;
-  gap: 7px;
-  margin-bottom: 4px;
-}
+/* grid */
+.grid { display: grid; gap: 8px; margin-bottom: 8px; }
 .grid[data-density="2"] { grid-template-columns: 1fr 1fr; }
 .grid[data-density="4"] { grid-template-columns: 1fr 1fr; }
 .grid[data-density="8"] { grid-template-columns: 1fr 1fr; }
 .grid[data-density="2"] .panel:nth-child(n+3),
 .grid[data-density="4"] .panel:nth-child(n+5) { display: none; }
 
-/* response panel */
+/* ── response panel ─────────────────────────────────────────────────── */
 .panel {
   background: var(--panel-bg);
-  border-radius: var(--r-card);
-  padding: 12px 14px;
-  min-height: 110px;
+  border-radius: var(--r-panel);
+  padding: 13px 15px;
+  min-height: 116px;
   display: flex; flex-direction: column;
-  position: relative;
-  transition: box-shadow 0.15s;
-  animation: panelIn 0.4s cubic-bezier(.2,.7,.2,1) both;
+  animation: panelIn .42s cubic-bezier(.2,.6,.2,1) both;
 }
-.panel:hover { box-shadow: 0 0 0 1px var(--panel-bg2); }
 @keyframes panelIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -314,620 +334,509 @@ input::placeholder, textarea::placeholder { color: var(--muted2); }
 
 .p-head {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 9px;
 }
-.p-name {
-  display: flex; align-items: center; gap: 6px;
-}
+.p-head.is-processing { margin-bottom: 16px; }
+
+.p-name { display: flex; align-items: center; gap: 7px; }
 .p-dot {
   width: 5px; height: 5px; border-radius: 50%;
-  background: var(--panel-fg);
+  background: var(--panel-fg); flex-shrink: 0;
 }
 .p-label {
   font-size: 10px; font-weight: 500;
-  color: var(--panel-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: var(--panel-fg2);
+  text-transform: uppercase; letter-spacing: 0.5px;
 }
 .p-status {
-  font-size: 9px;
-  color: var(--panel-muted);
-  letter-spacing: 0.3px;
+  font-size: 9px; color: var(--panel-mut);
+  letter-spacing: 0.2px;
 }
 .p-status[data-state="done"] { color: var(--ok); }
+[data-theme="light"] .p-status[data-state="done"] { color: var(--ok); }
 
 .p-body {
-  font-size: 12px;
-  color: var(--panel-fg2);
-  line-height: 1.65;
-  letter-spacing: -0.1px;
-  flex: 1;
-  white-space: pre-wrap;
-  word-break: break-word;
+  font-size: 12px; color: var(--panel-fg2);
+  line-height: 1.65; letter-spacing: -0.1px;
+  flex: 1; white-space: pre-wrap; word-break: break-word;
+  overflow-y: auto; padding-right: 2px;
 }
 .p-cursor {
   display: inline-block;
   width: 1.5px; height: 11px;
   background: var(--panel-fg2);
-  vertical-align: -1px;
-  margin-left: 1px;
+  vertical-align: -1px; margin-left: 1px;
   animation: blink 1s step-end infinite;
 }
-@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
 
-/* processing dots */
-.p-dots { display: flex; align-items: center; gap: 6px; padding: 8px 0; }
+.p-dots { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
 .p-dots .d {
   width: 5px; height: 5px; border-radius: 50%;
   background: var(--panel-fg);
-  animation: dots 1.5s ease-in-out infinite;
+  animation: dotpulse 1.5s ease-in-out infinite;
 }
-@keyframes dots {
-  0%, 60%, 100% { transform: scale(1); opacity: 0.25; }
-  30%           { transform: scale(1.5); opacity: 0.9; }
+@keyframes dotpulse {
+  0%,60%,100% { transform: scale(1); opacity: .25; }
+  30%          { transform: scale(1.5); opacity: .9; }
 }
 
 .p-foot {
   display: flex; gap: 14px;
   border-top: 0.5px solid var(--panel-line);
-  padding-top: 7px; margin-top: 8px;
+  padding-top: 8px; margin-top: 9px;
 }
 .p-foot button {
-  font-size: 10px;
-  color: var(--panel-muted);
+  font-size: 10px; color: var(--panel-mut);
   letter-spacing: 0.1px;
-  transition: color 0.12s;
+  transition: color .12s;
 }
 .p-foot button:hover { color: var(--panel-fg); }
 
 /* ── synthesis ──────────────────────────────────────────────────────── */
 .synth {
-  margin-top: 4px;
-  background: var(--bg2);
-  border: var(--hairline);
+  margin-bottom: 14px;
+  background: var(--panel-bg);
   border-radius: var(--r-panel);
-  overflow: hidden;
-  animation: panelIn 0.5s cubic-bezier(.2,.7,.2,1) both;
+  padding: 20px 22px 0;
+  animation: panelIn .5s cubic-bezier(.2,.7,.2,1) both;
 }
 .synth-head {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 14px;
-  border-bottom: var(--hairline);
-  flex-wrap: wrap; gap: 10px;
+  margin-bottom: 18px; flex-wrap: wrap; gap: 10px;
 }
-.synth-title {
-  display: flex; align-items: center; gap: 10px;
-}
-.synth-title .lbl {
-  font-size: 11px; font-weight: 500;
-  color: var(--fg); letter-spacing: -0.2px;
+.synth-title { display: flex; align-items: center; gap: 10px; }
+.synth-lbl {
+  font-size: 14px; font-weight: 500;
+  color: var(--panel-fg); letter-spacing: -0.4px;
 }
 .synth-badge {
   font-size: 9px; font-weight: 500;
-  padding: 3px 9px;
-  background: var(--bg3);
-  border-radius: var(--r-chip);
-  color: var(--muted);
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
+  padding: 3px 8px;
+  background: var(--panel-bg2); border-radius: var(--r-pill);
+  color: var(--panel-fg2);
+  letter-spacing: 0.5px; text-transform: uppercase;
 }
-.synth-actions { display: flex; align-items: center; gap: 6px; }
-.synth-actions .exp {
-  font-size: 10px; font-weight: 500;
-  color: var(--muted);
-  background: var(--bg3);
-  border: var(--hairline);
-  border-radius: 5px;
-  padding: 4px 9px;
-  letter-spacing: 0.3px;
-  transition: color 0.12s;
+.synth-meta {
+  font-size: 9px; color: var(--panel-fg2);
+  letter-spacing: 0.4px; text-transform: uppercase;
+  font-weight: 500; opacity: .55;
 }
-.synth-actions .exp:hover { color: var(--fg); }
-.synth-actions .save {
-  background: var(--fg); color: var(--bg);
-  font-size: 11px; font-weight: 500;
-  padding: 6px 13px; border-radius: var(--r-btn);
-  margin-left: 6px;
-  letter-spacing: -0.1px;
-  transition: opacity 0.12s, transform 0.06s;
-}
-.synth-actions .save:hover { opacity: 0.88; }
-.synth-actions .save:active { transform: scale(0.97); }
-
 .synth-block {
-  display: grid;
-  grid-template-columns: 110px 1fr;
-  gap: 18px;
-  padding: 14px 16px;
-  border-top: var(--hairline);
+  display: grid; grid-template-columns: 110px 1fr;
+  gap: 20px; padding: 14px 0;
+  border-top: 0.5px solid var(--panel-line);
 }
 .synth-block:first-of-type { border-top: none; }
 .synth-block-label {
   font-size: 9px; font-weight: 500;
-  color: var(--muted2);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+  color: var(--panel-fg2); opacity: .55;
+  text-transform: uppercase; letter-spacing: 0.6px;
   padding-top: 3px;
 }
-[data-theme="light"] .synth-block-label { color: var(--muted); }
 .synth-block-body {
-  font-size: 12px;
-  color: #A8A098;
-  line-height: 1.7;
-  letter-spacing: -0.1px;
+  margin: 0; font-size: 13.5px; line-height: 1.7;
+  color: var(--panel-fg2); letter-spacing: -0.15px;
 }
-[data-theme="light"] .synth-block-body { color: #6E685E; }
+.synth-foot {
+  display: flex; gap: 14px; align-items: center;
+  border-top: 0.5px solid var(--panel-line);
+  padding: 14px 0 16px; margin-top: 6px;
+  flex-wrap: wrap;
+}
+.synth-foot-lbl {
+  font-size: 10px; color: var(--panel-fg2); opacity: .55;
+  letter-spacing: 0.4px; text-transform: uppercase; font-weight: 500;
+}
+.synth-exp {
+  font-size: 11px; font-weight: 500;
+  color: var(--panel-fg2); cursor: pointer; letter-spacing: 0.2px;
+  transition: opacity .12s;
+}
+.synth-exp:hover { opacity: .6; }
+.synth-save {
+  margin-left: auto;
+  background: transparent; color: var(--panel-fg);
+  border: 0.5px solid var(--panel-fg2);
+  font-size: 12px; font-weight: 500;
+  padding: 7px 16px; border-radius: var(--r-btn);
+  cursor: pointer; letter-spacing: -0.1px;
+  transition: opacity .12s, transform .06s;
+}
+.synth-save:hover { opacity: .75; }
+.synth-save:active { transform: scale(.97); }
 
-/* ═══════════════════════ INPUT BAR (fixed) ═════════════════════════ */
+/* ══════════════════════ INPUT BAR ════════════════════════════════════ */
 .input-fade {
-  position: absolute;
-  left: 0; right: 0; bottom: var(--inbar-h, 90px);
-  height: 30px;
+  position: absolute; left: 0; right: 0; bottom: 88px;
+  height: 32px;
   background: linear-gradient(to bottom, transparent, var(--bg));
-  pointer-events: none;
-  z-index: 8;
+  pointer-events: none; z-index: 8;
 }
 .input-bar {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  padding: 10px 16px 16px;
-  z-index: 9;
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 10px 16px 18px; z-index: 9;
 }
 .input-card {
   max-width: 1180px; margin: 0 auto;
-  background: var(--bg2);
-  border: var(--hairline);
-  border-radius: 12px;
-  padding: 11px 13px;
+  background: var(--bg2); border: var(--hair);
+  border-radius: var(--r-input);
+  padding: 12px 14px;
 }
 .chips {
   display: flex; gap: 6px; flex-wrap: wrap;
-  margin-bottom: 9px;
+  margin-bottom: 11px;
 }
 .chip {
-  font-size: 10.5px;
-  padding: 4px 11px;
-  background: var(--bg3);
-  border: var(--hairline);
-  border-radius: var(--r-chip);
-  color: #8A8480;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: color 0.12s, border-color 0.12s;
+  font-size: 11px; padding: 5px 12px;
+  background: var(--bg3); border: var(--hair);
+  border-radius: var(--r-pill);
+  color: var(--fg-muted); white-space: nowrap; cursor: pointer;
+  letter-spacing: -0.05px;
+  transition: color .12s, background .15s;
 }
-[data-theme="light"] .chip { color: #5A554E; }
-.chip:hover { color: var(--fg); border-color: var(--muted2); }
+.chip:hover { background: #252320; color: var(--fg); }
+[data-theme="light"] .chip:hover { background: var(--bg2); color: var(--fg); }
 
-.in-row {
-  display: flex; align-items: center; gap: 10px;
-}
+.in-row { display: flex; align-items: center; gap: 10px; }
 .in-pipe {
-  font-size: 12px; color: var(--muted2); opacity: 0.6;
-  flex: 0 0 auto;
+  font-size: 14px; color: var(--fg-faint);
+  flex: 0 0 auto; user-select: none; opacity: .6;
 }
 .in-field {
-  flex: 1;
-  background: transparent;
-  border: none; outline: none;
-  color: var(--fg);
-  font-size: 12.5px;
-  letter-spacing: -0.1px;
-  padding: 4px 0;
+  flex: 1; background: transparent; border: none; outline: none;
+  color: var(--fg); font-size: 13px; letter-spacing: -0.1px;
 }
 .in-send {
   background: var(--fg); color: var(--bg);
-  font-size: 11.5px; font-weight: 500;
-  padding: 6px 16px; border-radius: var(--r-btn);
-  letter-spacing: -0.1px;
-  transition: opacity 0.12s, transform 0.06s;
-  flex: 0 0 auto;
+  font-size: 12px; font-weight: 500;
+  padding: 7px 16px; border-radius: var(--r-btn);
+  letter-spacing: -0.1px; flex: 0 0 auto;
+  transition: opacity .12s, transform .06s;
 }
-.in-send:hover { opacity: 0.88; }
-.in-send:active { transform: scale(0.97); }
-.in-send[disabled] { opacity: 0.5; cursor: default; }
+.in-send:hover { opacity: .88; transform: scale(.97); }
+.in-send[disabled] {
+  background: var(--bg3); color: var(--fg-muted);
+  opacity: 1; cursor: default; transform: none;
+}
 
-/* ═══════════════════════ MODE POPOVER ══════════════════════════════ */
-.popover-overlay {
+/* ══════════════════════ MODE POPOVER ═════════════════════════════════ */
+.pop-overlay {
   position: fixed; inset: 0; z-index: 50;
-  background: transparent;
+  background: rgba(12,11,9,.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
-.popover-overlay[hidden] { display: none; }
+.pop-overlay[hidden] { display: none; }
 .popover {
-  position: absolute;
-  top: var(--pop-top, 56px);
-  left: var(--pop-left, 16px);
-  background: var(--bg2);
-  border: var(--hairline);
-  border-radius: 12px;
-  padding: 6px;
-  min-width: 256px;
-  animation: popIn 0.13s ease-out both;
+  position: fixed; z-index: 51;
+  background: var(--bg2); border: var(--hair);
+  border-radius: 12px; padding: 6px;
+  min-width: 300px;
+  animation: popIn .18s ease-out both;
 }
 @keyframes popIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: scale(.985) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+.pop-hd {
+  padding: 8px 10px 6px;
+  font-size: 9px; font-weight: 500;
+  color: var(--fg-faint); letter-spacing: 0.6px; text-transform: uppercase;
 }
 .pop-opt {
-  padding: 9px 11px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.1s;
+  padding: 9px 10px; border-radius: 8px;
+  cursor: pointer; margin-bottom: 1px;
+  transition: background .1s;
 }
 .pop-opt:hover { background: var(--bg3); }
-.pop-opt[data-active="true"] {
-  background: var(--fg);
-}
+.pop-opt[data-active="true"] { background: var(--fg); }
 .pop-opt[data-active="true"] .pop-name { color: var(--bg); }
-.pop-opt[data-active="true"] .pop-desc { color: var(--bg); opacity: 0.5; }
+.pop-opt[data-active="true"] .pop-hint,
+.pop-opt[data-active="true"] .pop-desc { color: var(--bg); opacity: .55; }
+.pop-name-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 3px;
+}
 .pop-name {
   font-size: 12px; font-weight: 500;
-  color: var(--fg);
-  letter-spacing: -0.1px;
+  color: var(--fg); letter-spacing: -0.2px;
 }
-.pop-name .slash { opacity: 0.55; margin-right: 1px; }
+.pop-hint {
+  font-size: 9px; color: var(--fg-muted);
+  letter-spacing: 0.4px; text-transform: uppercase;
+}
 .pop-desc {
-  font-size: 10.5px;
-  color: var(--muted);
-  margin-top: 2px;
-  letter-spacing: -0.05px;
+  font-size: 11px; color: var(--fg-muted);
+  letter-spacing: -0.05px; line-height: 1.4;
 }
 
-/* ═══════════════════════ NOTES PANEL ═══════════════════════════════ */
+/* ══════════════════════ NOTES ════════════════════════════════════════ */
 .notes-toggle {
-  position: fixed;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  background: var(--bg2);
-  border: var(--hairline);
-  color: var(--muted);
+  position: fixed; right: 18px; top: 18px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg2); border: var(--hair);
+  color: var(--fg-muted);
   display: flex; align-items: center; justify-content: center;
-  z-index: 30;
-  transition: background 0.12s, color 0.12s, opacity 0.2s, right 0.2s ease;
+  z-index: 25;
+  transition: background .12s, color .12s, opacity .2s;
 }
 .notes-toggle:hover { background: var(--bg3); color: var(--fg); }
-.app[data-notes="true"] .notes-toggle { right: 296px; opacity: 0; pointer-events: none; }
+.app[data-nt="true"] .notes-toggle { opacity: 0; pointer-events: none; }
 
 .notes-panel {
-  background: var(--bg2);
-  border-left: var(--hairline);
+  background: var(--bg2); border-left: var(--hair);
   display: flex; flex-direction: column;
-  overflow: hidden;
-  min-width: 0;
+  overflow: hidden; min-width: 0;
 }
 .notes-head {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 14px;
-  border-bottom: var(--hairline);
-  min-height: 48px;
+  padding: 14px 14px 10px;
+  border-bottom: var(--hair); min-height: 48px;
 }
 .notes-title { font-size: 13px; font-weight: 500; color: var(--fg); letter-spacing: -0.3px; }
 .notes-close {
-  width: 24px; height: 24px;
-  font-size: 16px; line-height: 1;
-  color: var(--muted);
-  border-radius: 6px;
+  width: 24px; height: 24px; font-size: 16px; line-height: 1;
+  color: var(--fg-muted); border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
-  transition: background 0.12s, color 0.12s;
+  transition: background .12s, color .12s;
 }
 .notes-close:hover { background: var(--bg3); color: var(--fg); }
 .notes-body {
-  flex: 1;
-  background: transparent;
-  border: none; outline: none; resize: none;
-  padding: 14px 16px;
-  color: var(--fg);
-  font-family: var(--font);
-  font-size: 12px; line-height: 1.7;
-  letter-spacing: -0.1px;
+  flex: 1; background: transparent; border: none; outline: none; resize: none;
+  padding: 14px 16px; color: var(--fg); font-family: var(--font);
+  font-size: 12px; line-height: 1.7; letter-spacing: -0.1px;
 }
 .notes-foot {
-  padding: 9px 16px;
-  border-top: var(--hairline);
-  font-size: 10px;
-  color: var(--muted2);
-  letter-spacing: 0.2px;
+  padding: 9px 16px; border-top: var(--hair);
+  font-size: 10px; color: var(--fg-faint); letter-spacing: 0.1px;
 }
 
-/* ═══════════════════════ BIBLIOTECA ════════════════════════════════ */
-.lib-head {
-  display: flex; align-items: center; gap: 14px;
-  margin-bottom: 22px;
-  flex-wrap: wrap;
+/* ══════════════════════ BIBLIOTECA ═══════════════════════════════════ */
+.lib-bar {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 18px; flex-wrap: wrap;
 }
-.screen-title {
-  font-size: 15px; font-weight: 500;
-  color: var(--fg); letter-spacing: -0.4px;
-  margin-right: auto;
-}
-.search-box {
+.lib-search {
+  flex: 1 1 260px;
+  background: var(--bg2); border: var(--hair);
+  border-radius: var(--r-card);
+  padding: 8px 14px;
   display: flex; align-items: center; gap: 8px;
-  background: var(--bg3);
-  border: var(--hairline);
-  border-radius: var(--r-btn);
-  padding: 7px 12px;
-  flex: 0 0 280px;
 }
-.search-box svg { stroke: var(--muted); fill: none; stroke-width: 1; }
-.search-box input {
+.lib-search input {
   flex: 1; background: transparent; border: none; outline: none;
-  font-size: 12px; color: var(--fg); letter-spacing: -0.1px;
+  color: var(--fg); font-size: 12.5px; letter-spacing: -0.1px;
 }
 .lib-filters { display: flex; gap: 4px; flex-wrap: wrap; }
 .lib-filters button {
   font-size: 10.5px; font-weight: 500;
-  padding: 5px 11px;
-  background: var(--bg3);
-  border: var(--hairline);
-  border-radius: var(--r-chip);
-  color: var(--muted);
-  letter-spacing: 0.1px;
-  transition: background 0.12s, color 0.12s;
+  padding: 6px 11px;
+  background: var(--bg2); border: var(--hair);
+  border-radius: var(--r-pill);
+  color: var(--fg-muted); letter-spacing: 0.1px;
+  transition: background .12s, color .12s;
 }
 .lib-filters button:hover { color: var(--fg); }
 .lib-filters button[data-active="true"] {
   background: var(--fg); color: var(--bg); border-color: transparent;
 }
 
-.lib-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+.lib-list {
+  background: var(--bg2); border: var(--hair);
+  border-radius: 12px; overflow: hidden;
 }
-@media (max-width: 980px) { .lib-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 640px) { .lib-grid { grid-template-columns: 1fr; } }
-
-.lib-card {
-  background: var(--bg2);
-  border: var(--hairline);
-  border-radius: var(--r-card);
-  padding: 13px 14px;
-  cursor: pointer;
-  transition: border-color 0.12s, transform 0.12s;
+.lib-item {
+  display: grid; grid-template-columns: 1fr auto;
+  gap: 12px; align-items: start;
+  padding: 16px 18px;
+  border-top: var(--hair); cursor: pointer;
+  transition: background .12s;
 }
-.lib-card:hover { border-color: var(--muted2); }
-.lib-card-title {
+.lib-item:first-child { border-top: none; }
+.lib-item:hover { background: var(--bg3); }
+.lib-item-title {
   font-size: 13px; font-weight: 500;
-  color: var(--fg); letter-spacing: -0.2px;
+  color: var(--fg); letter-spacing: -0.3px; margin-bottom: 4px;
 }
-.lib-card-when {
-  font-size: 10px; color: var(--muted);
-  margin-top: 3px; letter-spacing: 0.1px;
+.lib-item-preview {
+  font-size: 11.5px; color: var(--fg-muted);
+  letter-spacing: -0.1px; line-height: 1.55;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.lib-card-badges { display: flex; gap: 5px; margin-top: 9px; flex-wrap: wrap; }
-.lib-card-badges .b {
+.lib-item-meta {
+  display: flex; flex-direction: column;
+  align-items: flex-end; gap: 6px; flex-shrink: 0;
   font-size: 9px; font-weight: 500;
-  padding: 2px 8px;
-  background: var(--bg3);
-  border: var(--hairline);
-  border-radius: var(--r-chip);
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.4px; text-transform: uppercase;
 }
-.lib-card-preview {
-  font-size: 11px; color: var(--muted);
-  margin-top: 8px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  font-style: italic;
-  letter-spacing: -0.05px;
-}
-.lib-card-foot {
-  display: flex; gap: 14px;
-  border-top: var(--hairline);
-  margin-top: 10px; padding-top: 8px;
-}
-.lib-card-foot button {
-  font-size: 10px; color: var(--muted);
-  letter-spacing: 0.1px;
-  transition: color 0.12s;
-}
-.lib-card-foot button:hover { color: var(--fg); }
-
+.lib-item-when { color: var(--fg-faint); }
+.lib-item-mode { color: var(--fg-muted); }
 .lib-empty {
-  grid-column: 1 / -1;
-  padding: 60px 20px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--muted2);
+  padding: 48px 20px; text-align: center;
+  font-size: 12px; color: var(--fg-faint);
 }
 
-/* ═══════════════════════ CONFIGURAÇÃO ══════════════════════════════ */
-.cfg-head { margin-bottom: 22px; }
-.cfg-group { margin-bottom: 32px; }
-.cfg-group-label {
+/* ══════════════════════ CONFIGURAÇÃO ═════════════════════════════════ */
+.cfg-section { margin-bottom: 28px; }
+.cfg-section-lbl {
   font-size: 9px; font-weight: 500;
-  color: var(--muted2);
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  padding-bottom: 10px;
-  border-bottom: var(--hairline);
-  margin-bottom: 10px;
+  color: var(--fg-faint); letter-spacing: 0.6px; text-transform: uppercase;
+  margin-bottom: 12px;
 }
-[data-theme="light"] .cfg-group-label { color: var(--muted); }
-
+.cfg-card {
+  background: var(--bg2); border: var(--hair);
+  border-radius: 12px; overflow: hidden;
+}
 .cfg-row {
-  display: flex; align-items: center; gap: 14px;
-  padding: 9px 4px;
-  border-bottom: var(--hairline);
+  padding: 14px 18px;
+  border-bottom: var(--hair);
+  display: grid; grid-template-columns: 1fr auto;
+  gap: 16px; align-items: center;
 }
 .cfg-row:last-child { border-bottom: none; }
 .cfg-row-label {
-  display: flex; align-items: center; gap: 7px;
-  min-width: 130px;
+  font-size: 12.5px; font-weight: 500;
+  color: var(--fg); letter-spacing: -0.2px; margin-bottom: 2px;
 }
-.cfg-key-name {
-  font-size: 10px; font-weight: 500;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  min-width: 80px;
+.cfg-row-hint {
+  font-size: 11px; color: var(--fg-muted);
+  letter-spacing: -0.1px; line-height: 1.5;
 }
-.cfg-row input[type="password"],
-.cfg-row input[type="text"] {
-  flex: 1;
-  background: var(--bg3);
-  border: var(--hairline);
-  border-radius: 7px;
-  padding: 6px 10px;
-  font-size: 12px; color: var(--fg);
-  font-family: var(--font-mono);
-  outline: none;
-  letter-spacing: 0;
-}
-.cfg-rever {
-  font-size: 10px; color: var(--muted);
-  letter-spacing: 0.1px;
-  transition: color 0.12s;
-  flex: 0 0 auto;
-}
-.cfg-rever:hover { color: var(--fg); }
-.cfg-state {
-  font-size: 10px; flex: 0 0 auto;
-  letter-spacing: 0.1px;
-  min-width: 60px; text-align: right;
-}
-.cfg-state[data-on="true"] { color: var(--ok); }
-.cfg-state[data-on="false"] { color: var(--muted); }
-
-.cfg-pref-label {
-  flex: 1;
-  font-size: 12px; color: var(--fg);
-  letter-spacing: -0.1px;
-}
-.cfg-pref-hint {
-  font-size: 11px; color: var(--muted);
-  margin-top: 2px;
-  letter-spacing: -0.05px;
-}
-select.cfg-select {
-  background: var(--bg3);
-  border: var(--hairline);
-  border-radius: 7px;
-  padding: 6px 28px 6px 10px;
+.api-field { display: flex; align-items: center; gap: 8px; }
+.api-field input {
+  width: 190px;
+  background: var(--bg3); border: var(--hair);
+  border-radius: 8px; padding: 7px 12px;
   color: var(--fg);
-  font-size: 11.5px;
-  outline: none;
-  cursor: pointer;
-  appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
-                    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-  background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
+  font-family: var(--font-mono); font-size: 11.5px; outline: none;
 }
-.cfg-toggle-group { display: inline-flex; gap: 4px; }
-.cfg-toggle-group button {
-  font-size: 10.5px; font-weight: 500;
-  padding: 5px 11px;
-  border-radius: 6px;
-  background: var(--bg3);
-  border: var(--hairline);
-  color: var(--muted);
-  letter-spacing: 0.1px;
-  transition: background 0.12s, color 0.12s;
+.api-status {
+  font-size: 9px; font-weight: 500;
+  letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap;
 }
-.cfg-toggle-group button[data-active="true"] {
-  background: var(--fg); color: var(--bg); border-color: transparent;
-}
-.cfg-slider {
-  flex: 1;
-  display: flex; align-items: center; gap: 10px;
-  max-width: 360px;
-}
-.cfg-slider input[type=range] { flex: 1; accent-color: var(--fg); }
-.cfg-slider .lbl {
-  font-size: 10px; color: var(--muted); min-width: 40px; text-align: right;
-  letter-spacing: 0.2px;
-}
-.cfg-data-line {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 9px 4px;
-  border-bottom: var(--hairline);
-}
-.cfg-data-line:last-child { border-bottom: none; }
-.cfg-data-line .info {
-  font-size: 12px; color: var(--fg); letter-spacing: -0.1px;
-}
-.cfg-data-line .info span { color: var(--muted); }
-.cfg-data-line button {
-  font-size: 11px; color: var(--muted);
-  letter-spacing: 0.1px;
-  transition: color 0.12s;
-}
-.cfg-data-line button:hover { color: var(--fg); }
+.api-status[data-on="true"]  { color: var(--fg); }
+.api-status[data-on="false"] { color: var(--fg-faint); opacity: .6; }
 
-/* ═══════════════════════ MISC / FOCUS ══════════════════════════════ */
-:focus-visible { outline: 1px solid var(--muted); outline-offset: 2px; border-radius: 4px; }
+.cfg-select {
+  background: var(--bg3); border: var(--hair);
+  border-radius: 8px; padding: 6px 10px;
+  color: var(--fg); font-size: 11.5px; outline: none; cursor: pointer;
+}
+.cfg-toggle {
+  width: 36px; height: 20px; border-radius: 12px;
+  background: var(--bg3); border: var(--hair);
+  position: relative; cursor: pointer; padding: 0;
+  transition: background .15s, border-color .15s;
+}
+.cfg-toggle[data-on="true"] { background: var(--fg); border-color: transparent; }
+.cfg-toggle .thumb {
+  position: absolute; top: 2px; left: 2px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--fg-muted);
+  transition: left .15s, background .15s;
+}
+.cfg-toggle[data-on="true"] .thumb { left: 18px; background: var(--bg); }
+
+kbd.cfg-kbd {
+  display: inline-flex; align-items: center;
+  background: var(--bg3); border: var(--hair);
+  border-radius: 5px; padding: 4px 8px;
+  font-size: 11px; color: var(--fg-muted);
+  font-family: var(--font-mono);
+}
+
+/* ── misc ───────────────────────────────────────────────────────────── */
+:focus-visible { outline: 1px solid var(--fg-muted); outline-offset: 2px; border-radius: 4px; }
 input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offset: 0; }
 </style>
 </head>
 <body>
 
-<div id="app" class="app" data-collapsed="false" data-notes="false">
+<div id="app" class="app" data-sb="false" data-nt="false">
 
-  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <!-- ═════════════════ SIDEBAR ═════════════════ -->
   <aside class="sidebar">
-    <div class="sb-brand" title="Hydra Labs">
-      <span class="sb-mark" aria-hidden="true">
-        <!-- octagon mark, 16px -->
-        <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
-          <g class="stroke" stroke-width="1.4" stroke-linejoin="round">
-            <polygon points="9.5,3 22.5,3 29,9.5 29,22.5 22.5,29 9.5,29 3,22.5 3,9.5"/>
-            <polygon points="13,11 19,11 21,13 21,19 19,21 13,21 11,19 11,13"/>
-            <line x1="3" y1="3" x2="29" y2="29"/>
-            <line x1="29" y1="3" x2="3" y2="29"/>
-          </g>
-        </svg>
-      </span>
+    <div class="sb-brand">
+      <div class="sb-mark" aria-hidden="true">
+        <div class="dot"></div>
+        <div class="ring"></div>
+      </div>
       <span class="sb-name">Hydra Labs</span>
     </div>
 
     <nav class="sb-nav">
       <div class="sb-row" data-nav="arena" data-active="true">
-        <span class="ic"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5"/><circle cx="7" cy="7" r="2"/></svg></span>
-        <span class="sb-row-label">Arena</span>
+        <span class="ic">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <rect x="2"  y="2"  width="5" height="5" rx="1" stroke-width="1"/>
+            <rect x="9"  y="2"  width="5" height="5" rx="1" stroke-width="1"/>
+            <rect x="2"  y="9"  width="5" height="5" rx="1" stroke-width="1"/>
+            <rect x="9"  y="9"  width="5" height="5" rx="1" stroke-width="1"/>
+          </svg>
+        </span>
+        <span class="sb-row-lbl">Arena</span>
       </div>
       <div class="sb-row" data-nav="library">
-        <span class="ic"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="2.5" y="2" width="9" height="10" rx="0.5"/><line x1="4.8" y1="4.5" x2="4.8" y2="9.5"/><line x1="7" y1="4.5" x2="7" y2="9.5"/></svg></span>
-        <span class="sb-row-label">Biblioteca</span>
+        <span class="ic">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <rect x="2.5" y="3"    width="11" height="2.2" rx=".5" stroke-width="1"/>
+            <rect x="2.5" y="6.7"  width="11" height="2.2" rx=".5" stroke-width="1"/>
+            <rect x="2.5" y="10.4" width="11" height="2.2" rx=".5" stroke-width="1"/>
+          </svg>
+        </span>
+        <span class="sb-row-lbl">Biblioteca</span>
       </div>
       <div class="sb-row" data-nav="config">
-        <span class="ic"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="2"/><path d="M7 1.5v2 M7 10.5v2 M1.5 7h2 M10.5 7h2 M3 3l1.4 1.4 M9.6 9.6 11 11 M3 11l1.4-1.4 M9.6 4.4 11 3"/></svg></span>
-        <span class="sb-row-label">Configuração</span>
+        <span class="ic">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke-linecap="round">
+            <line x1="2.5" y1="4"  x2="13.5" y2="4"  stroke-width="1"/>
+            <circle cx="10" cy="4"  r="1.5" fill="var(--bg2)" stroke-width="1"/>
+            <line x1="2.5" y1="8"  x2="13.5" y2="8"  stroke-width="1"/>
+            <circle cx="5"  cy="8"  r="1.5" fill="var(--bg2)" stroke-width="1"/>
+            <line x1="2.5" y1="12" x2="13.5" y2="12" stroke-width="1"/>
+            <circle cx="11" cy="12" r="1.5" fill="var(--bg2)" stroke-width="1"/>
+          </svg>
+        </span>
+        <span class="sb-row-lbl">Configuração</span>
       </div>
     </nav>
 
-    <div class="sb-history" id="sb-history"></div>
+    <!-- sessions label + history scroll -->
+    <div class="sb-sessions-hd">
+      <span class="sb-section-lbl">Sessões</span>
+      <button id="new-session-btn" title="Nova sessão" aria-label="Nova sessão">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+             stroke="currentColor" stroke-width="1" stroke-linecap="round">
+          <line x1="7" y1="2.5" x2="7" y2="11.5"/>
+          <line x1="2.5" y1="7" x2="11.5" y2="7"/>
+        </svg>
+      </button>
+    </div>
+    <div class="sb-history-wrap" id="sb-history"></div>
+    <div class="sb-flex-1" id="sb-flex"></div>
 
     <div class="sb-foot">
       <div class="sb-row" id="theme-toggle">
-        <span class="ic" id="theme-ic">
-          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1a6 6 0 1 0 0 12V1z" fill="currentColor"/><circle cx="7" cy="7" r="5.5"/></svg>
-        </span>
-        <span class="sb-row-label" id="theme-label">Tema claro</span>
+        <span class="ic" id="theme-ic"></span>
+        <span class="sb-row-lbl" id="theme-lbl">Tema claro</span>
       </div>
       <div class="sb-row" id="collapse-toggle">
-        <span class="ic" id="collapse-ic">
-          <svg width="14" height="14" viewBox="0 0 14 14"><polyline points="8,3 4,7 8,11" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </span>
-        <span class="sb-row-label">Recolher</span>
+        <span class="ic" id="collapse-ic"></span>
+        <span class="sb-row-lbl">Recolher</span>
       </div>
     </div>
   </aside>
 
-  <!-- ═══════════ MAIN ═══════════ -->
+  <!-- ═════════════════ MAIN ═════════════════════ -->
   <main class="main">
 
-    <!-- TOPBAR -->
     <header class="topbar">
       <button class="tb-mode" id="mode-btn" data-open="false">
-        <span class="slash">/</span><span id="mode-label">Raciocínio</span>
+        <span class="tb-slash">/</span><span id="mode-label">Raciocínio</span>
       </button>
       <div class="tb-right">
-        <span class="tb-status" id="tb-status">8 a aguardar · 0 concluídas</span>
+        <span class="tb-status" id="tb-status"></span>
         <div class="tb-density">
           <button data-d="2">2×</button>
           <button data-d="4">4×</button>
@@ -941,7 +850,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offs
       <!-- ARENA -->
       <section class="screen" data-id="arena" data-active="true">
         <div class="screen-inner">
-          <div class="query-bubble" id="query-bubble">"Qual o impacto das redes de influência nos sistemas democráticos modernos?"</div>
+          <div class="query-bubble" id="query-bubble"></div>
           <div class="grid" id="grid" data-density="8"></div>
           <div id="synth-mount"></div>
         </div>
@@ -950,9 +859,10 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offs
           <div class="input-card">
             <div class="chips" id="chips"></div>
             <div class="in-row">
-              <span class="in-pipe">|</span>
-              <input class="in-field" id="in-field" type="text" placeholder="Faz a tua pergunta às 8 inteligências…" />
-              <button class="in-send" id="in-send">Enviar</button>
+              <span class="in-pipe">›</span>
+              <input class="in-field" id="in-field" type="text"
+                     placeholder="Faz a tua pergunta às 8 inteligências…" />
+              <button class="in-send" id="in-send" disabled>Enviar</button>
             </div>
           </div>
         </div>
@@ -961,79 +871,94 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offs
       <!-- BIBLIOTECA -->
       <section class="screen" data-id="library">
         <div class="screen-inner">
-          <div class="lib-head">
-            <h1 class="screen-title">Biblioteca</h1>
-            <div class="search-box">
-              <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="5" cy="5" r="3.2"/><line x1="7.5" y1="7.5" x2="10" y2="10" stroke-linecap="round"/></svg>
-              <input id="lib-search" placeholder="Buscar sessões…" />
+          <div class="screen-head">
+            <div class="screen-overline">Biblioteca</div>
+            <h1 class="screen-title">Sessões</h1>
+            <p class="screen-sub" id="lib-sub"></p>
+          </div>
+          <div class="lib-bar">
+            <div class="lib-search">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+                   stroke="var(--fg-faint)" stroke-width="1">
+                <circle cx="5" cy="5" r="3.2"/>
+                <line x1="7.5" y1="7.5" x2="10" y2="10" stroke-linecap="round"/>
+              </svg>
+              <input id="lib-search" placeholder="Pesquisar sessões…" />
             </div>
             <div class="lib-filters" id="lib-filters">
-              <button data-f="all" data-active="true">Todos</button>
-              <button data-f="/Rápido">/Rápido</button>
-              <button data-f="/Raciocínio">/Raciocínio</button>
-              <button data-f="/Pesquisa">/Pesquisa</button>
-              <button data-f="/Investigação">/Investigação</button>
+              <button data-f="all"           data-active="true">Todos</button>
+              <button data-f="/Rápido">       /Rápido</button>
+              <button data-f="/Raciocínio">   /Raciocínio</button>
+              <button data-f="/Pesquisa">     /Pesquisa</button>
+              <button data-f="/Investigação"> /Investigação</button>
             </div>
           </div>
-          <div class="lib-grid" id="lib-grid"></div>
+          <div class="lib-list" id="lib-list"></div>
         </div>
       </section>
 
       <!-- CONFIGURAÇÃO -->
       <section class="screen" data-id="config">
         <div class="screen-inner">
-          <div class="cfg-head"><h1 class="screen-title">Configuração</h1></div>
+          <div class="screen-head">
+            <div class="screen-overline">Configuração</div>
+            <h1 class="screen-title">Preferências</h1>
+            <p class="screen-sub">Chaves de API, comportamento por defeito e atalhos.</p>
+          </div>
           <div id="cfg-mount"></div>
         </div>
       </section>
 
-    </div>
+    </div><!-- /screens -->
 
   </main>
 
-  <!-- ═══════════ NOTES PANEL ═══════════ -->
-  <aside class="notes-panel" id="notes-panel">
+  <!-- ═════════════════ NOTES PANEL ═════════════ -->
+  <aside class="notes-panel">
     <div class="notes-head">
       <span class="notes-title">Notas</span>
       <button class="notes-close" id="notes-close" aria-label="Fechar">×</button>
     </div>
-    <textarea class="notes-body" id="notes-body" placeholder="Escreve aqui…"></textarea>
+    <textarea class="notes-body" id="notes-body"
+              placeholder="Escreve aqui…"></textarea>
     <div class="notes-foot">Guardado automaticamente</div>
   </aside>
 
-</div>
+</div><!-- /app -->
 
 <!-- floating notes toggle -->
-<button class="notes-toggle" id="notes-toggle" aria-label="Abrir notas" title="Notas">
-  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round">
-    <rect x="3" y="2.5" width="9" height="10" rx="1"/>
-    <line x1="5" y1="5.2" x2="10" y2="5.2"/>
-    <line x1="5" y1="7.5" x2="10" y2="7.5"/>
-    <line x1="5" y1="9.8" x2="8" y2="9.8"/>
+<button class="notes-toggle" id="notes-toggle"
+        aria-label="Abrir notas" title="Notas">
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+       stroke="currentColor" stroke-width="1" stroke-linecap="round">
+    <rect x="2.5" y="2" width="9" height="10" rx="1"/>
+    <line x1="4.5" y1="5"   x2="9.5" y2="5"/>
+    <line x1="4.5" y1="7.2" x2="9.5" y2="7.2"/>
+    <line x1="4.5" y1="9.4" x2="7.5" y2="9.4"/>
   </svg>
 </button>
 
 <!-- mode popover -->
-<div class="popover-overlay" id="mode-overlay" hidden>
-  <div class="popover" id="mode-popover" role="menu"></div>
+<div class="pop-overlay" id="pop-overlay" hidden>
+  <div class="popover" id="popover" role="menu"></div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════════════════
-// HYDRA LABS · vanilla controller
-// ═══════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════
+// HYDRA LABS — vanilla controller
+// ══════════════════════════════════════════════════════════════════════
 
-// ── data ──────────────────────────────────────────────────────────────────
+// ── data ───────────────────────────────────────────────────────────────
 
 const MODELS = [
-  { id: 'claude',     name: 'Claude',     offset: '0s'    },
-  { id: 'grok',       name: 'Grok',       offset: '0.04s' },
-  { id: 'chatgpt',    name: 'ChatGPT',    offset: '0.06s' },
-  { id: 'gemini',     name: 'Gemini',     offset: '0.1s'  },
-  { id: 'perplexity', name: 'Perplexity', offset: '0.08s' },
-  { id: 'deepseek',   name: 'DeepSeek',   offset: '0.13s' },
-  { id: 'mistral',    name: 'Mistral',    offset: '0.09s' },
-  { id: 'cohere',     name: 'Cohere',     offset: '0.05s' },
+  { id: 'claude',     name: 'Claude',     dot: '0s'    },
+  { id: 'grok',       name: 'Grok',       dot: '0.04s' },
+  { id: 'chatgpt',    name: 'ChatGPT',    dot: '0.06s' },
+  { id: 'gemini',     name: 'Gemini',     dot: '0.1s'  },
+  { id: 'perplexity', name: 'Perplexity', dot: '0.08s' },
+  { id: 'deepseek',   name: 'DeepSeek',   dot: '0.13s' },
+  { id: 'mistral',    name: 'Mistral',    dot: '0.09s' },
+  { id: 'cohere',     name: 'Cohere',     dot: '0.05s' },
 ];
 
 const DEFAULT_QUERY = 'Qual o impacto das redes de influência nos sistemas democráticos modernos?';
@@ -1065,77 +990,82 @@ const SUGGESTIONS = [
 ];
 
 const MODES = [
-  { id: 'rapido',       label: 'Rápido',       desc: 'Resposta directa. Máximo 150 palavras.' },
-  { id: 'raciocinio',   label: 'Raciocínio',   desc: 'Cadeia de pensamento. Respostas exaustivas.' },
-  { id: 'pesquisa',     label: 'Pesquisa',     desc: 'Grounding factual. Fontes priorizadas.' },
-  { id: 'investigacao', label: 'Investigação', desc: 'Análise profunda. Pressupostos mapeados.' },
+  { id: 'rapido',       label: 'Rápido',       desc: 'Resposta directa. Máximo 150 palavras.',    hint: 'baixa latência' },
+  { id: 'raciocinio',   label: 'Raciocínio',   desc: 'Cadeia de pensamento. Respostas exaustivas.', hint: 'pensa antes' },
+  { id: 'pesquisa',     label: 'Pesquisa',     desc: 'Grounding factual. Fontes priorizadas.',     hint: 'web · papers' },
+  { id: 'investigacao', label: 'Investigação', desc: 'Análise profunda. Pressupostos mapeados.',   hint: 'profundo'     },
 ];
 
 const SYNTHESIS = [
-  { label: 'CONSENSO',    body: 'As oito vozes convergem: as redes de influência não são um defeito periférico do sistema democrático — são parte da sua estrutura operacional. A questão deixou de ser "se" e passou a ser "como" e "com que magnitude". Captura institucional, amplificação algorítmica e concentração financeira aparecem repetidos em pelo menos cinco respostas independentes.' },
-  { label: 'DIVERGÊNCIA', body: 'Grok e Mistral pressionam para uma posição cínica — a democracia "pura" como ficção retórica. Claude, Gemini e Cohere mantêm uma análise clínica, identificando os mesmos fenómenos sem recurso ao desespero. ChatGPT e DeepSeek tratam o problema como mensurável; Perplexity ancora em estudos empíricos. A divergência é tonal, não substantiva.' },
-  { label: 'INSIGHT',     body: 'Nenhum dos oito modelos abordou contra-mecanismos viáveis: jornalismo investigativo, conselhos cidadãos, transparência radical de financiamento. A análise é unanimemente diagnóstica, raramente prescritiva — uma assimetria que vale a pena interrogar na próxima iteração.' },
+  { label: 'CONSENSO',
+    body: 'As oito vozes convergem: as redes de influência não são um defeito periférico do sistema democrático — são parte da sua estrutura operacional. A questão deixou de ser "se" e passou a ser "como" e "com que magnitude". Captura institucional, amplificação algorítmica e concentração financeira aparecem repetidos em pelo menos cinco respostas independentes.' },
+  { label: 'DIVERGÊNCIA',
+    body: 'Grok e Mistral pressionam para uma posição cínica — a democracia "pura" como ficção retórica. Claude, Gemini e Cohere mantêm uma análise clínica, identificando os mesmos fenómenos sem recurso ao desespero. ChatGPT e DeepSeek tratam o problema como mensurável; Perplexity ancora em estudos empíricos. A divergência é tonal, não substantiva.' },
+  { label: 'INSIGHT',
+    body: 'Nenhum dos oito modelos abordou contra-mecanismos viáveis: jornalismo investigativo, conselhos cidadãos, transparência radical de financiamento. A análise é unanimemente diagnóstica, raramente prescritiva — uma assimetria que vale a pena interrogar na próxima iteração.' },
 ];
 
 const SESSIONS = [
-  { title: 'Redes de influência democrática',     when: 'hoje 14:32',  group: 'hoje',  mode: '/Raciocínio',   voices: 8, preview: 'Qual o impacto das redes de influência nos sistemas democráticos modernos?' },
-  { title: 'Teoria dos jogos aplicada',           when: 'hoje 11:07',  group: 'hoje',  mode: '/Investigação', voices: 8, preview: 'Como modelar coligações instáveis em equilíbrios não-cooperativos repetidos?' },
-  { title: 'Psicologia da manipulação',           when: 'ontem 22:14', group: 'ontem', mode: '/Pesquisa',     voices: 4, preview: 'Quais os mecanismos cognitivos explorados em campanhas de desinformação?' },
-  { title: 'Sistemas complexos e caos',           when: 'ontem 18:43', group: 'ontem', mode: '/Raciocínio',   voices: 8, preview: 'Onde está a fronteira entre comportamento caótico e meramente complexo?' },
-  { title: 'Poder e arquitectura institucional',  when: 'ontem 09:21', group: 'ontem', mode: '/Investigação', voices: 8, preview: 'Que arranjos institucionais resistem melhor a captura por elites?' },
-  { title: 'Filosofia da mente e consciência',    when: 'seg 20:11',   group: 'semana',mode: '/Raciocínio',   voices: 8, preview: 'A consciência é um fenómeno computacional ou irredutivelmente físico?' },
-  { title: 'Geopolítica do Indo-Pacífico',        when: 'seg 15:38',   group: 'semana',mode: '/Pesquisa',     voices: 8, preview: 'Que cenários de confrontação Taiwan-China são plausíveis até 2030?' },
-  { title: 'Epistemologia e certeza',             when: 'dom 11:02',   group: 'semana',mode: '/Investigação', voices: 4, preview: 'Quão justificada pode ser uma crença sem critério externo de validação?' },
-  { title: 'Linguagem e poder simbólico',         when: 'sáb 17:55',   group: 'semana',mode: '/Rápido',       voices: 2, preview: 'Como Bourdieu conceptualiza a violência simbólica em práticas linguísticas?' },
+  { title: 'Redes de influência democrática',     when: 'hoje 14:32',  group: 'hoje',   mode: '/Raciocínio',   voices: 8, preview: 'Qual o impacto das redes de influência nos sistemas democráticos modernos?' },
+  { title: 'Teoria dos jogos aplicada',           when: 'hoje 11:07',  group: 'hoje',   mode: '/Investigação', voices: 8, preview: 'Como modelar coligações instáveis em equilíbrios não-cooperativos repetidos?' },
+  { title: 'Psicologia da manipulação',           when: 'ontem 22:14', group: 'ontem',  mode: '/Pesquisa',     voices: 4, preview: 'Quais os mecanismos cognitivos explorados em campanhas de desinformação?' },
+  { title: 'Sistemas complexos e caos',           when: 'ontem 18:43', group: 'ontem',  mode: '/Raciocínio',   voices: 8, preview: 'Onde está a fronteira entre comportamento caótico e meramente complexo?' },
+  { title: 'Poder e arquitectura institucional',  when: 'ontem 09:21', group: 'ontem',  mode: '/Investigação', voices: 8, preview: 'Que arranjos institucionais resistem melhor a captura por elites?' },
+  { title: 'Filosofia da mente e consciência',    when: 'seg 20:11',   group: 'semana', mode: '/Raciocínio',   voices: 8, preview: 'A consciência é um fenómeno computacional ou irredutivelmente físico?' },
+  { title: 'Geopolítica do Indo-Pacífico',        when: 'seg 15:38',   group: 'semana', mode: '/Pesquisa',     voices: 8, preview: 'Que cenários de confrontação Taiwan-China são plausíveis até 2030?' },
+  { title: 'Epistemologia e certeza',             when: 'dom 11:02',   group: 'semana', mode: '/Investigação', voices: 4, preview: 'Quão justificada pode ser uma crença sem critério externo de validação?' },
+  { title: 'Linguagem e poder simbólico',         when: 'sáb 17:55',   group: 'semana', mode: '/Rápido',       voices: 2, preview: 'Como Bourdieu conceptualiza a violência simbólica em práticas linguísticas?' },
 ];
 
-// ── state ─────────────────────────────────────────────────────────────────
+// ── state ───────────────────────────────────────────────────────────────
 
 const state = {
-  view: 'arena',
-  theme: 'dark',
-  collapsed: false,
-  notesOpen: false,
-  mode: 'raciocinio',
-  density: 8,
-  query: DEFAULT_QUERY,
-  panels: MODELS.map(m => ({ id: m.id, name: m.name, status: 'streaming', text: '' })),
-  running: false,
-  streamSpeed: 18, // ms/char
-  libFilter: 'all',
-  libQuery: '',
+  view:        'arena',
+  theme:       'dark',
+  collapsed:   false,
+  notesOpen:   false,
+  mode:        'raciocinio',
+  density:     8,
+  query:       DEFAULT_QUERY,
+  panels:      [],
+  running:     false,
+  streamSpeed: 18,
+  libFilter:   'all',
+  libQuery:    '',
 };
 
-// initial seeded scenario: 1 streaming, 1 done, rest processing
-state.panels[0] = { id: 'claude', name: 'Claude', status: 'streaming', text: RESPONSES.claude.slice(0, 96) };
-state.panels[1] = { id: 'grok',   name: 'Grok',   status: 'done',      text: RESPONSES.grok };
-for (let i = 2; i < state.panels.length; i++) {
-  state.panels[i] = { id: MODELS[i].id, name: MODELS[i].name, status: 'processing', text: '' };
-}
+// initial scenario: 1 streaming, 1 done, rest processing
+state.panels = MODELS.map((m, i) => ({
+  id:     m.id,
+  name:   m.name,
+  status: i === 0 ? 'streaming' : i === 1 ? 'done' : 'processing',
+  text:   i === 0 ? RESPONSES[m.id].slice(0, 96) : i === 1 ? RESPONSES[m.id] : '',
+}));
 
 const timers = [];
-function clearAllTimers() { while (timers.length) clearTimeout(timers.pop()); }
+function clearTimers() { while (timers.length) clearTimeout(timers.pop()); }
 
-// ── helpers ───────────────────────────────────────────────────────────────
+// ── DOM helpers ─────────────────────────────────────────────────────────
 
-const $  = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
 function el(tag, attrs = {}, ...children) {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (k === 'class') e.className = v;
-    else if (k === 'html') e.innerHTML = v;
+    else if (k === 'html')  e.innerHTML = v;
     else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
     else if (v !== false && v != null) e.setAttribute(k, v);
   }
   for (const c of children.flat()) {
     if (c == null || c === false) continue;
-    e.append(c.nodeType ? c : document.createTextNode(c));
+    e.append(c?.nodeType ? c : document.createTextNode(c));
   }
   return e;
 }
 
-// ── sidebar history render ────────────────────────────────────────────────
+// ── sidebar history ─────────────────────────────────────────────────────
 
 function renderHistory() {
   const root = $('#sb-history');
@@ -1148,7 +1078,7 @@ function renderHistory() {
   for (const g of groups) {
     const items = SESSIONS.filter(s => s.group === g.key);
     if (!items.length) continue;
-    root.append(el('div', { class: 'sb-section' }, g.label));
+    root.append(el('div', { class: 'sb-group-lbl' }, g.label));
     for (const s of items) {
       root.append(
         el('div', { class: 'sb-item', title: s.title, onclick: () => goto('arena') },
@@ -1160,43 +1090,54 @@ function renderHistory() {
   }
 }
 
-// ── chips render ──────────────────────────────────────────────────────────
+// ── chips ───────────────────────────────────────────────────────────────
 
 function renderChips() {
   const root = $('#chips');
   root.innerHTML = '';
   for (const s of SUGGESTIONS) {
-    root.append(el('button', { class: 'chip', onclick: () => { $('#in-field').value = s; $('#in-field').focus(); } }, s));
+    root.append(el('button', { class: 'chip', onclick: () => {
+      const f = $('#in-field');
+      f.value = f.value ? `${f.value} · ${s}` : s;
+      f.focus();
+      syncSendBtn();
+    }}, s));
   }
 }
 
-// ── panels (arena grid) ───────────────────────────────────────────────────
+// ── arena grid ──────────────────────────────────────────────────────────
 
 function renderGrid() {
   const grid = $('#grid');
   grid.dataset.density = state.density;
   grid.innerHTML = '';
+
   state.panels.forEach((p, i) => {
     const m = MODELS[i];
-    const head = el('div', { class: 'p-head' },
+    const isProc = p.status === 'processing';
+    const isStream = p.status === 'streaming';
+    const isDone = p.status === 'done';
+
+    const head = el('div', { class: `p-head${isProc ? ' is-processing' : ''}` },
       el('div', { class: 'p-name' },
         el('span', { class: 'p-dot' }),
         el('span', { class: 'p-label' }, p.name),
       ),
-      el('span', { class: 'p-status', 'data-state': p.status },
-        p.status === 'processing' ? 'processando' :
-        p.status === 'streaming'  ? 'streaming'    : 'concluído'
-      ),
+      !isProc
+        ? el('span', { class: 'p-status', 'data-state': p.status },
+            isStream ? 'streaming' : 'concluído')
+        : null,
     );
 
     let body;
-    if (p.status === 'processing') {
+    if (isProc) {
+      const d = m.dot;
       body = el('div', { class: 'p-dots' },
-        el('span', { class: 'd', style: `animation-delay: ${m.offset}` }),
-        el('span', { class: 'd', style: `animation-delay: calc(${m.offset} + 0.18s)` }),
-        el('span', { class: 'd', style: `animation-delay: calc(${m.offset} + 0.36s)` }),
+        el('span', { class: 'd', style: `animation-delay:${d}` }),
+        el('span', { class: 'd', style: `animation-delay:calc(${d} + .18s)` }),
+        el('span', { class: 'd', style: `animation-delay:calc(${d} + .36s)` }),
       );
-    } else if (p.status === 'streaming') {
+    } else if (isStream) {
       body = el('div', { class: 'p-body' });
       body.textContent = p.text;
       body.append(el('span', { class: 'p-cursor' }));
@@ -1204,9 +1145,9 @@ function renderGrid() {
       body = el('div', { class: 'p-body' }, p.text);
     }
 
-    const children = [head, body];
-    if (p.status === 'done') {
-      children.push(
+    const parts = [head, body];
+    if (isDone) {
+      parts.push(
         el('div', { class: 'p-foot' },
           el('button', {}, 'copiar'),
           el('button', {}, 'repetir'),
@@ -1214,47 +1155,53 @@ function renderGrid() {
         )
       );
     }
-    grid.append(el('div', { class: 'panel', style: `animation-delay: ${i * 40}ms` }, ...children));
+
+    grid.append(
+      el('div', { class: 'panel', style: `animation-delay:${i * 40}ms` }, ...parts)
+    );
   });
 
-  // status text in topbar
   const proc = state.panels.filter(p => p.status !== 'done').length;
   const done = state.panels.filter(p => p.status === 'done').length;
-  $('#tb-status').textContent = `${proc} ${proc === 1 ? 'processando' : 'a processar'} · ${done} ${done === 1 ? 'concluída' : 'concluídas'}`;
+  $('#tb-status').textContent = proc > 0
+    ? `${proc} a processar · ${done} concluídas`
+    : `${done} concluídas`;
 }
 
-// ── synthesis render ──────────────────────────────────────────────────────
+// ── synthesis ───────────────────────────────────────────────────────────
 
 function renderSynth() {
   const mount = $('#synth-mount');
   mount.innerHTML = '';
-  const allDone = state.panels.every(p => p.status === 'done');
+  const allDone = state.panels.length > 0 && state.panels.every(p => p.status === 'done');
   if (!allDone) return;
 
   const head = el('div', { class: 'synth-head' },
     el('div', { class: 'synth-title' },
-      el('span', { class: 'lbl' }, 'Síntese'),
+      el('span', { class: 'p-dot' }),
+      el('span', { class: 'synth-lbl' }, 'Síntese'),
       el('span', { class: 'synth-badge' }, 'gerado por Claude'),
     ),
-    el('div', { class: 'synth-actions' },
-      el('button', { class: 'exp' }, 'MD'),
-      el('button', { class: 'exp' }, 'EPUB'),
-      el('button', { class: 'exp' }, 'JSON'),
-      el('button', { class: 'save' }, 'Guardar sessão'),
-    ),
+    el('span', { class: 'synth-meta' }, '1.2s · 8/8 fontes'),
   );
 
   const blocks = SYNTHESIS.map(b =>
     el('div', { class: 'synth-block' },
       el('div', { class: 'synth-block-label' }, b.label),
-      el('div', { class: 'synth-block-body' }, b.body),
+      el('p',   { class: 'synth-block-body'  }, b.body),
     )
   );
 
-  mount.append(el('div', { class: 'synth' }, head, ...blocks));
+  const foot = el('div', { class: 'synth-foot' },
+    el('span', { class: 'synth-foot-lbl' }, 'Exportar'),
+    ...['MD', 'EPUB', 'JSON'].map(f => el('button', { class: 'synth-exp' }, f)),
+    el('button', { class: 'synth-save' }, 'Guardar sessão'),
+  );
+
+  mount.append(el('div', { class: 'synth' }, head, ...blocks, foot));
 }
 
-// ── arena render ──────────────────────────────────────────────────────────
+// ── arena ───────────────────────────────────────────────────────────────
 
 function renderArena() {
   $('#query-bubble').textContent = `"${state.query}"`;
@@ -1262,192 +1209,223 @@ function renderArena() {
   renderSynth();
 }
 
-// ── biblioteca render ─────────────────────────────────────────────────────
+// ── library ─────────────────────────────────────────────────────────────
 
 function renderLibrary() {
-  const grid = $('#lib-grid');
-  grid.innerHTML = '';
+  const list = $('#lib-list');
+  list.innerHTML = '';
+
   const q = state.libQuery.toLowerCase();
   const filtered = SESSIONS.filter(s =>
     (state.libFilter === 'all' || s.mode === state.libFilter) &&
-    (!q || (s.title + ' ' + s.preview).toLowerCase().includes(q))
+    (!q || (`${s.title} ${s.preview}`).toLowerCase().includes(q))
   );
+
+  $('#lib-sub').textContent =
+    `${SESSIONS.length} conversas guardadas — pesquisa, filtra por modo, ou abre para continuar.`;
+
   if (!filtered.length) {
-    grid.append(el('div', { class: 'lib-empty' }, 'Sem resultados.'));
+    list.append(el('div', { class: 'lib-empty' }, 'Sem resultados.'));
     return;
   }
   for (const s of filtered) {
-    grid.append(
-      el('div', { class: 'lib-card', onclick: () => goto('arena') },
-        el('div', { class: 'lib-card-title' }, s.title),
-        el('div', { class: 'lib-card-when' }, s.when),
-        el('div', { class: 'lib-card-badges' },
-          el('span', { class: 'b' }, s.mode),
-          el('span', { class: 'b' }, `${s.voices} vozes`),
+    list.append(
+      el('div', { class: 'lib-item', onclick: () => goto('arena') },
+        el('div', { style: 'min-width:0' },
+          el('div', { class: 'lib-item-title' }, s.title),
+          el('div', { class: 'lib-item-preview' }, s.preview),
         ),
-        el('div', { class: 'lib-card-preview' }, s.preview),
-        el('div', { class: 'lib-card-foot' },
-          el('button', {}, 'exportar'),
-          el('button', {}, 'apagar'),
+        el('div', { class: 'lib-item-meta' },
+          el('span', { class: 'lib-item-when' }, s.when),
+          el('span', { class: 'lib-item-mode' }, `${s.mode} · ${s.voices} vozes`),
         ),
       )
     );
   }
 }
 
-// ── configuração render ───────────────────────────────────────────────────
-
-function configRowKey(m, on) {
-  return el('div', { class: 'cfg-row' },
-    el('span', { class: 'p-dot', style: 'background: var(--fg)' }),
-    el('span', { class: 'cfg-key-name' }, m.name),
-    el('input', { type: 'password', placeholder: 'sk-••••••••••' }),
-    el('button', { class: 'cfg-rever' }, 'Rever'),
-    el('span', { class: 'cfg-state', 'data-on': String(on) }, on ? 'activa' : 'em falta'),
-  );
-}
-
-function selectField(options, value, onchange) {
-  const sel = el('select', { class: 'cfg-select' });
-  for (const o of options) {
-    const opt = el('option', { value: o }, o);
-    if (o === value) opt.selected = true;
-    sel.append(opt);
-  }
-  sel.addEventListener('change', e => onchange && onchange(e.target.value));
-  return sel;
-}
-
-function toggleGroup(options, value, onchange) {
-  const wrap = el('div', { class: 'cfg-toggle-group' });
-  for (const o of options) {
-    wrap.append(el('button', {
-      'data-active': String(o === value),
-      onclick: () => onchange && onchange(o),
-    }, String(o) + (typeof o === 'number' ? '×' : '')));
-  }
-  return wrap;
-}
+// ── config ──────────────────────────────────────────────────────────────
 
 function renderConfig() {
   const mount = $('#cfg-mount');
   mount.innerHTML = '';
 
-  // group A — chaves de API
-  const apiKeys = [
-    ['Claude', true], ['ChatGPT', true], ['Gemini', true], ['Grok', true],
-    ['Perplexity', true], ['DeepSeek', false], ['Mistral', true], ['Cohere', false],
+  // API keys
+  const providers = [
+    { name: 'Anthropic',  on: true  },
+    { name: 'OpenAI',     on: true  },
+    { name: 'xAI',        on: true  },
+    { name: 'Google',     on: true  },
+    { name: 'Perplexity', on: true  },
+    { name: 'DeepSeek',   on: false },
+    { name: 'Mistral',    on: true  },
+    { name: 'Cohere',     on: false },
   ];
-  const groupA = el('div', { class: 'cfg-group' },
-    el('div', { class: 'cfg-group-label' }, 'Chaves de API'),
-    ...apiKeys.map(([name, on]) => configRowKey({ name }, on)),
+
+  const apiSection = cfgSection('Vozes',
+    ...providers.map(p =>
+      cfgRow(p.name, null,
+        el('div', { class: 'api-field' },
+          el('input', { type: 'password', placeholder: p.on ? '••••••••••••••••' : 'sk-…' }),
+          el('span', { class: 'api-status', 'data-on': String(p.on) },
+            p.on ? '● ligado' : '○ por ligar'),
+        )
+      )
+    )
   );
 
-  // group B — preferências
-  const groupB = el('div', { class: 'cfg-group' },
-    el('div', { class: 'cfg-group-label' }, 'Preferências'),
-    prefRow('Modelo de síntese', 'Voz responsável por unificar respostas.',
-      selectField(['Claude','ChatGPT','Gemini','Grok','Perplexity','DeepSeek','Mistral','Cohere'], 'Claude')),
-    prefRow('Velocidade de streaming', 'ms por caractere — menor é mais rápido.',
-      sliderField()),
-    prefRow('Escala por defeito', 'Densidade inicial da arena.',
-      toggleGroup([2,4,8], state.density, v => { state.density = v; renderArena(); syncDensityButtons(); })),
-    prefRow('Modo por defeito', 'Aplicado a cada nova arena.',
-      selectField(MODES.map(m => '/' + m.label), '/' + activeMode().label, v => {
-        const found = MODES.find(m => '/' + m.label === v);
-        if (found) { state.mode = found.id; syncMode(); }
-      })),
+  // Behaviour
+  let defaultMode = '/Raciocínio';
+  let autoSynth   = true;
+  let synthesizer = 'Claude';
+  const behavSection = cfgSection('Comportamento',
+    cfgRow('Modo por defeito', 'Aplicado a cada nova arena.',
+      cfgSelect(['/Rápido', '/Raciocínio', '/Pesquisa', '/Investigação'], defaultMode,
+        v => { defaultMode = v; })),
+    cfgRow('Síntese automática', 'Gera síntese assim que as 8 vozes concluem.',
+      cfgToggle(autoSynth, v => { autoSynth = v; })),
+    cfgRow('Sintetizador', 'Voz responsável por unificar respostas.',
+      cfgSelect(['Claude', 'Grok', 'ChatGPT', 'Gemini'], synthesizer,
+        v => { synthesizer = v; })),
   );
 
-  // group C — dados locais
-  const groupC = el('div', { class: 'cfg-group' },
-    el('div', { class: 'cfg-group-label' }, 'Dados locais'),
-    el('div', { class: 'cfg-data-line' },
-      el('span', { class: 'info' }, 'Sessões guardadas: ', el('span', {}, '47')),
-      el('button', {}, 'Exportar tudo'),
-    ),
-    el('div', { class: 'cfg-data-line' },
-      el('span', { class: 'info' }, 'Base de dados: ', el('span', {}, '12.4 MB')),
-      el('button', {}, 'Limpar cache'),
-    ),
+  // Interface
+  let lang    = 'Português';
+  let haptics = false;
+  const ifSection = cfgSection('Interface',
+    cfgRow('Idioma', 'Aplica-se a UI e prompts internos.',
+      cfgSelect(['Português', 'English', 'Español', 'Français'], lang,
+        v => { lang = v; })),
+    cfgRow('Vibração no streaming', 'Feedback subtil em dispositivos com háptica.',
+      cfgToggle(haptics, v => { haptics = v; })),
   );
 
-  mount.append(groupA, groupB, groupC);
+  // Shortcuts
+  const shortcuts = [
+    ['Nova arena',        '⌘ N'],
+    ['Focar input',       '/'],
+    ['Mudar de modo',     '⌘ K'],
+    ['Abrir notas',       '⌘ ⇧ N'],
+    ['Recolher sidebar',  '⌘ \\'],
+  ];
+  const kbdSection = cfgSection('Atalhos',
+    ...shortcuts.map(([label, kbd]) =>
+      cfgRow(label, null, el('kbd', { class: 'cfg-kbd' }, kbd))
+    )
+  );
+
+  mount.append(apiSection, behavSection, ifSection, kbdSection);
 }
 
-function prefRow(label, hint, control) {
+function cfgSection(title, ...rows) {
+  return el('div', { class: 'cfg-section' },
+    el('div', { class: 'cfg-section-lbl' }, title),
+    el('div', { class: 'cfg-card' }, ...rows),
+  );
+}
+function cfgRow(label, hint, control) {
   return el('div', { class: 'cfg-row' },
-    el('div', { style: 'flex:1' },
-      el('div', { class: 'cfg-pref-label' }, label),
-      el('div', { class: 'cfg-pref-hint' }, hint),
+    el('div', {},
+      el('div', { class: 'cfg-row-label' }, label),
+      hint ? el('div', { class: 'cfg-row-hint' }, hint) : null,
     ),
     el('div', {}, control),
   );
 }
-
-function sliderField() {
-  const range = el('input', { type: 'range', min: 6, max: 60, step: 2, value: String(state.streamSpeed) });
-  const lbl = el('span', { class: 'lbl' }, state.streamSpeed + 'ms');
-  range.addEventListener('input', e => {
-    state.streamSpeed = +e.target.value;
-    lbl.textContent = state.streamSpeed + 'ms';
-  });
-  return el('div', { class: 'cfg-slider' },
-    el('span', { class: 'lbl', style: 'min-width:40px; text-align:left' }, 'Lento'),
-    range,
-    el('span', { class: 'lbl' }, 'Rápido'),
-    lbl,
+function cfgSelect(opts, val, onChange) {
+  const s = el('select', { class: 'cfg-select' });
+  for (const o of opts) {
+    const opt = el('option', { value: o }, o);
+    if (o === val) opt.selected = true;
+    s.append(opt);
+  }
+  s.addEventListener('change', e => onChange(e.target.value));
+  return s;
+}
+function cfgToggle(initial, onChange) {
+  const btn = el('button', { class: 'cfg-toggle', 'data-on': String(initial) },
+    el('span', { class: 'thumb' }),
   );
+  btn.addEventListener('click', () => {
+    const next = btn.dataset.on !== 'true';
+    btn.dataset.on = String(next);
+    onChange(next);
+  });
+  return btn;
 }
 
-function activeMode() { return MODES.find(m => m.id === state.mode) || MODES[1]; }
-
-// ── mode popover ──────────────────────────────────────────────────────────
+// ── mode popover ────────────────────────────────────────────────────────
 
 function openModePopover() {
-  const overlay = $('#mode-overlay');
-  const pop = $('#mode-popover');
+  const pop = $('#popover');
   pop.innerHTML = '';
+  pop.append(el('div', { class: 'pop-hd' }, 'Modo de execução'));
   for (const m of MODES) {
     pop.append(
-      el('div', { class: 'pop-opt', 'data-active': String(m.id === state.mode), onclick: () => {
-        state.mode = m.id; syncMode(); closeModePopover();
-      } },
-        el('div', { class: 'pop-name' }, el('span', { class: 'slash' }, '/'), m.label),
+      el('div', {
+        class: 'pop-opt', 'data-active': String(m.id === state.mode), role: 'menuitem',
+        onclick: () => { state.mode = m.id; syncMode(); closeModePopover(); },
+      },
+        el('div', { class: 'pop-name-row' },
+          el('span', { class: 'pop-name' }, `/${m.label}`),
+          el('span', { class: 'pop-hint' }, m.hint),
+        ),
         el('div', { class: 'pop-desc' }, m.desc),
       )
     );
   }
-  const btn = $('#mode-btn');
-  const r = btn.getBoundingClientRect();
-  pop.style.setProperty('--pop-top', (r.bottom + 8) + 'px');
-  pop.style.setProperty('--pop-left', r.left + 'px');
-  overlay.hidden = false;
-  btn.dataset.open = 'true';
+  const r = $('#mode-btn').getBoundingClientRect();
+  pop.style.top  = (r.bottom + 8) + 'px';
+  pop.style.left = r.left + 'px';
+  $('#pop-overlay').hidden = false;
+  $('#mode-btn').dataset.open = 'true';
 }
+
 function closeModePopover() {
-  $('#mode-overlay').hidden = true;
+  $('#pop-overlay').hidden = true;
   $('#mode-btn').dataset.open = 'false';
 }
 
-// ── theme + collapse + notes ──────────────────────────────────────────────
+// ── theme / collapse / notes ─────────────────────────────────────────────
+
+const SVG = {
+  sun: `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round">
+    <circle cx="7" cy="7" r="2.4"/>
+    <line x1="7" y1="1.2" x2="7" y2="2.6"/>
+    <line x1="7" y1="11.4" x2="7" y2="12.8"/>
+    <line x1="1.2" y1="7" x2="2.6" y2="7"/>
+    <line x1="11.4" y1="7" x2="12.8" y2="7"/>
+    <line x1="3" y1="3" x2="4" y2="4"/>
+    <line x1="10" y1="10" x2="11" y2="11"/>
+    <line x1="3" y1="11" x2="4" y2="10"/>
+    <line x1="10" y1="4" x2="11" y2="3"/>
+  </svg>`,
+  moon: `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round">
+    <path d="M11.5 8.5 A5 5 0 0 1 5.5 2.5 A5 5 0 1 0 11.5 8.5 Z"/>
+  </svg>`,
+  chevL: `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><polyline points="8.5,3.5 5,7 8.5,10.5"/></svg>`,
+  chevR: `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><polyline points="5.5,3.5 9,7 5.5,10.5"/></svg>`,
+};
 
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', state.theme);
-  $('#theme-label').textContent = state.theme === 'dark' ? 'Tema claro' : 'Tema escuro';
-}
-function applyCollapse() {
-  $('#app').dataset.collapsed = state.collapsed;
-  // rotate chevron
-  const ic = $('#collapse-ic svg');
-  if (ic) ic.style.transform = state.collapsed ? 'rotate(180deg)' : 'rotate(0deg)';
-  ic.style.transition = 'transform 0.2s ease';
-}
-function applyNotes() {
-  $('#app').dataset.notes = state.notesOpen;
+  const dark = state.theme === 'dark';
+  $('#theme-ic').innerHTML  = dark ? SVG.sun  : SVG.moon;
+  $('#theme-lbl').textContent = dark ? 'Tema claro' : 'Tema escuro';
 }
 
-// ── nav / view switching ──────────────────────────────────────────────────
+function applyCollapse() {
+  $('#app').dataset.sb = state.collapsed;
+  $('#collapse-ic').innerHTML = state.collapsed ? SVG.chevR : SVG.chevL;
+  // flex-1 spacer: show only when collapsed (history hidden)
+  $('#sb-flex').style.display = state.collapsed ? 'flex' : 'none';
+}
+
+function applyNotes() {
+  $('#app').dataset.nt = state.notesOpen;
+}
+
+// ── nav ──────────────────────────────────────────────────────────────────
 
 function goto(view) {
   state.view = view;
@@ -1457,131 +1435,146 @@ function goto(view) {
   if (view === 'config')  renderConfig();
 }
 
-// ── density ───────────────────────────────────────────────────────────────
-
-function syncDensityButtons() {
-  $$('.tb-density button').forEach(b => b.dataset.active = String(+b.dataset.d === state.density));
-}
 function syncMode() {
-  $('#mode-label').textContent = activeMode().label;
+  const m = MODES.find(m => m.id === state.mode) || MODES[1];
+  $('#mode-label').textContent = m.label;
 }
 
-// ── streaming simulation ──────────────────────────────────────────────────
+function syncDensity() {
+  $$('.tb-density button').forEach(b =>
+    b.dataset.active = String(+b.dataset.d === state.density));
+}
+
+function syncSendBtn() {
+  const v = $('#in-field').value.trim();
+  $('#in-send').disabled = !v || state.running;
+}
+
+// ── streaming simulation ─────────────────────────────────────────────────
 
 function runSimulation(query) {
-  clearAllTimers();
+  clearTimers();
   state.running = true;
-  state.query = query;
-
-  // reset all to processing
-  state.panels = MODELS.map(m => ({ id: m.id, name: m.name, status: 'processing', text: '' }));
+  state.query   = query;
+  state.panels  = MODELS.map(m => ({ id: m.id, name: m.name, status: 'processing', text: '' }));
   renderArena();
+  syncSendBtn();
 
   state.panels.forEach((p, i) => {
-    const startDelay = 800 + Math.random() * 1200;
-    const fullText = RESPONSES[p.id];
-    const charDelay = state.streamSpeed + (i % 3) * 4;
+    const startAt = 700 + Math.random() * 1100;
+    const txt = RESPONSES[p.id];
+    const charMs = state.streamSpeed + (i % 3) * 4;
 
     timers.push(setTimeout(() => {
-      // start streaming
       state.panels[i].status = 'streaming';
-      renderArena();
+      renderGrid();
 
-      // stream char by char
-      for (let k = 1; k <= fullText.length; k++) {
+      for (let k = 1; k <= txt.length; k++) {
         timers.push(setTimeout(() => {
-          state.panels[i].text = fullText.slice(0, k);
-          renderGrid(); // light re-render of grid only
-        }, k * charDelay));
+          state.panels[i].text = txt.slice(0, k);
+          renderGrid();
+        }, k * charMs));
       }
-      // mark done
       timers.push(setTimeout(() => {
         state.panels[i].status = 'done';
-        state.panels[i].text = fullText;
+        state.panels[i].text   = txt;
         renderArena();
-      }, fullText.length * charDelay + 120));
-    }, startDelay));
+        const allDone = state.panels.every(p => p.status === 'done');
+        if (allDone) { state.running = false; syncSendBtn(); }
+      }, txt.length * charMs + 100));
+    }, startAt));
   });
 }
 
-// ── boot / wire events ────────────────────────────────────────────────────
+// ── boot ─────────────────────────────────────────────────────────────────
 
 function boot() {
-  // sidebar
   renderHistory();
   renderChips();
   renderArena();
   syncMode();
+  applyTheme();
+  applyCollapse();
+  applyNotes();
+
+  $('#notes-body').value =
+    'Insight: nenhum modelo apresentou contra-mecanismos. Próxima iteração — pedir prescrições.\n\n' +
+    'Rever Bourdieu sobre violência simbólica.';
 
   // nav
-  $$('.sb-row[data-nav]').forEach(r => r.addEventListener('click', () => goto(r.dataset.nav)));
+  $$('.sb-row[data-nav]').forEach(r =>
+    r.addEventListener('click', () => goto(r.dataset.nav)));
 
   // density
-  $$('.tb-density button').forEach(b => b.addEventListener('click', () => {
-    state.density = +b.dataset.d;
-    syncDensityButtons();
-    renderGrid();
-  }));
+  $$('.tb-density button').forEach(b =>
+    b.addEventListener('click', () => {
+      state.density = +b.dataset.d;
+      syncDensity();
+      renderGrid();
+    })
+  );
 
-  // mode
+  // mode popover
   $('#mode-btn').addEventListener('click', e => {
     e.stopPropagation();
-    if ($('#mode-btn').dataset.open === 'true') closeModePopover();
-    else openModePopover();
+    $('#mode-btn').dataset.open === 'true' ? closeModePopover() : openModePopover();
   });
-  $('#mode-overlay').addEventListener('click', e => {
-    if (e.target === $('#mode-overlay')) closeModePopover();
+  $('#pop-overlay').addEventListener('click', e => {
+    if (e.target === $('#pop-overlay')) closeModePopover();
   });
 
   // input
   const submit = () => {
     const v = $('#in-field').value.trim();
-    if (!v) return;
+    if (!v || state.running) return;
     runSimulation(v);
     $('#in-field').value = '';
+    syncSendBtn();
   };
   $('#in-send').addEventListener('click', submit);
+  $('#in-field').addEventListener('input',   syncSendBtn);
   $('#in-field').addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); submit(); }
   });
 
-  // theme + collapse
+  // theme
   $('#theme-toggle').addEventListener('click', () => {
     state.theme = state.theme === 'dark' ? 'light' : 'dark';
     applyTheme();
   });
+
+  // collapse
   $('#collapse-toggle').addEventListener('click', () => {
     state.collapsed = !state.collapsed;
     applyCollapse();
   });
 
   // notes
-  $('#notes-toggle').addEventListener('click', () => { state.notesOpen = true; applyNotes(); });
-  $('#notes-close').addEventListener('click', () => { state.notesOpen = false; applyNotes(); });
-  $('#notes-body').value =
-    'Insight: nenhum modelo apresentou contra-mecanismos. Próxima iteração — pedir prescrições.\n\n' +
-    'Rever Bourdieu sobre violência simbólica.';
+  $('#notes-toggle').addEventListener('click', () => { state.notesOpen = true;  applyNotes(); });
+  $('#notes-close').addEventListener( 'click', () => { state.notesOpen = false; applyNotes(); });
 
-  // library search + filters
-  $('#lib-search').addEventListener('input', e => { state.libQuery = e.target.value; renderLibrary(); });
-  $$('#lib-filters button').forEach(b => b.addEventListener('click', () => {
-    state.libFilter = b.dataset.f;
-    $$('#lib-filters button').forEach(x => x.dataset.active = String(x === b));
-    renderLibrary();
-  }));
+  // library
+  $('#lib-search').addEventListener('input', e => {
+    state.libQuery = e.target.value; renderLibrary();
+  });
+  $$('#lib-filters button').forEach(b =>
+    b.addEventListener('click', () => {
+      state.libFilter = b.dataset.f;
+      $$('#lib-filters button').forEach(x => x.dataset.active = String(x === b));
+      renderLibrary();
+    })
+  );
 
-  // shortcuts
+  // keyboard shortcuts
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeModePopover();
-    if ((e.metaKey || e.ctrlKey) && e.key === '\\') { state.collapsed = !state.collapsed; applyCollapse(); }
-    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
+      state.collapsed = !state.collapsed; applyCollapse();
+    }
+    if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
       e.preventDefault(); $('#in-field').focus();
     }
   });
-
-  applyTheme();
-  applyCollapse();
-  applyNotes();
 }
 
 boot();
