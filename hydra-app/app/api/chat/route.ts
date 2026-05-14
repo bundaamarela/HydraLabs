@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   if (!query || typeof query !== 'string' || query.trim().length === 0) {
     return new Response('query is required', { status: 400 });
   }
-  if (!mode || !['rapido', 'raciocinio', 'pesquisa', 'investigacao'].includes(mode)) {
+  if (!mode || !['rapido', 'raciocinio', 'pesquisa', 'investigacao', 'sintese'].includes(mode)) {
     return new Response('invalid mode', { status: 400 });
   }
   if (!Array.isArray(models) || models.length === 0) {

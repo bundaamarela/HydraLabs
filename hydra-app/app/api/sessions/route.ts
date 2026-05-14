@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 // POST /api/sessions — create a new session
 export async function POST(req: NextRequest) {
   let body: {
-    title: string;
+    title?: string;
     query: string;
     mode: string;
     voices?: number;
@@ -49,16 +49,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  if (!body.title || !body.query || !body.mode) {
+  if (!body.query || !body.mode) {
     return NextResponse.json(
-      { error: 'title, query and mode are required' },
+      { error: 'query and mode are required' },
       { status: 400 },
     );
   }
 
+  const title = body.title ?? body.query.slice(0, 80);
+
   const session = await db.session.create({
     data: {
-      title:     body.title,
+      title,
       query:     body.query,
       mode:      body.mode,
       voices:    body.voices ?? 8,
