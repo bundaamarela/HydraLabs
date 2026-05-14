@@ -1,0 +1,222 @@
+Corrige dois bugs e implementa o Workspace 
+de Investigação.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BUG 1 — DROPDOWN DE EXPORTAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+O dropdown do botão "Exportar ↓" fica cortado
+ou escondido abaixo do viewport.
+
+Corrige: o dropdown abre para CIMA (não para baixo)
+quando está no fundo do ecrã.
+Usa position fixed com coordenadas calculadas
+via getBoundingClientRect.
+Z-index: 9999.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BUG 2 — SIDEBAR DE PROJECTOS NA BIBLIOTECA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A sidebar esquerda com lista de projectos
+não está a aparecer em /library.
+
+Verifica se o componente ProjectSidebar existe.
+Se não existe — cria-o dentro de library/page.tsx:
+  Largura 180px fixa à esquerda
+  Lista de projectos do GET /api/projects
+  "Todas as sessões" no topo (activo por defeito)
+  Cada projecto: ponto colorido + nome + contagem
+  Clique filtra as sessões por projecto
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WORKSPACE DE INVESTIGAÇÃO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Adiciona uma nova secção ao projecto: /workspace
+
+É um ambiente de trabalho dedicado a um tema
+de investigação — onde o utilizador consolida
+tudo o que aprendeu nas sessões de arena.
+
+MODELO DE DADOS — adiciona ao schema Prisma:
+
+model Workspace {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  projectId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project? @relation(fields:[projectId],
+                         references:[id])
+  blocks      Block[]
+}
+
+model Block {
+  id          String    @id @default(cuid())
+  workspaceId String
+  type        String    -- 'text' | 'heading' | 
+                        -- 'insight' | 'quote' | 
+                        -- 'divider' | 'session-ref'
+  content     String?
+  meta        String?   -- JSON com dados extras
+  order       Int
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields:[workspaceId],
+                          references:[id],
+                          onDelete:Cascade)
+}
+
+Corre: npx prisma db push
+
+ROTAS API:
+
+/app/api/workspaces/route.ts
+  GET  → lista workspaces (com contagem de blocos)
+  POST → cria { title, description, projectId }
+
+/app/api/workspaces/[id]/route.ts
+  GET    → workspace completo com todos os blocos
+  PATCH  → actualiza title ou description
+  DELETE → apaga workspace e blocos
+
+/app/api/workspaces/[id]/blocks/route.ts
+  GET    → lista blocos ordenados por order
+  POST   → cria bloco { type, content, meta, order }
+  PATCH  → reordena blocos { blocks: [{id, order}] }
+
+/app/api/workspaces/[id]/blocks/[blockId]/route.ts
+  PATCH  → actualiza content ou meta
+  DELETE → apaga bloco
+
+PÁGINA /workspace/page.tsx — lista de workspaces:
+
+  Header: "Workspaces" + botão "Novo workspace"
+  Grid de cards (3 colunas):
+    Cada card:
+      Título 14px weight 500
+      Descrição 12px var(--fg-muted) truncada
+      Contagem de blocos e data
+      Ponto colorido do projecto associado
+      Hover: border visível
+      Clique: abre /workspace/[id]
+
+  Estado vazio:
+    "Cria um workspace para consolidar
+     a tua investigação."
+
+PÁGINA /workspace/[id]/page.tsx — editor:
+
+É um editor de blocos simples (tipo Notion mas mínimo).
+Fundo branco/preto limpo. Sem distrações.
+
+HEADER DO WORKSPACE:
+  Título editável inline (click para editar)
+  Descrição editável inline abaixo
+  Breadcrumb: Workspaces → [título]
+  Botões no topo direito:
+    "Exportar" → dropdown MD · PDF · EPUB
+    "← Voltar"
+
+BARRA DE FERRAMENTAS LATERAL (esquerda, 40px):
+  Ícones para adicionar blocos:
+    T  → Título (heading)
+    ¶  → Parágrafo (text)
+    "  → Citação (quote)
+    ★  → Insight (insight — destaque visual)
+    —  → Divisor (divider)
+    ⊞  → Referência de sessão (session-ref)
+  Tooltip ao hover com nome do bloco
+
+BLOCOS — tipos e aparência:
+
+  heading:
+    Texto grande 22px weight 600
+    Click para editar inline
+    Enter → cria parágrafo abaixo
+
+  text:
+    Parágrafo normal 14px line-height 1.8
+    Click para editar inline
+    Suporta Enter para nova linha
+    Shift+Enter → novo bloco abaixo
+
+  quote:
+    Border-left 3px solid var(--border)
+    Padding-left 16px
+    Texto 14px italic var(--fg-muted)
+    Atribuição opcional abaixo (10px)
+
+  insight:
+    Fundo var(--surface-2)
+    Border-left 3px solid #F59E0B
+    Border-radius 6px, padding 12px 16px
+    Label "INSIGHT" uppercase 9px #F59E0B
+    Texto 13px abaixo
+
+  divider:
+    Linha hr simples 0.5px var(--border)
+    Não editável
+
+  session-ref:
+    Referência a uma sessão da arena
+    Fundo var(--surface-2), border-radius 8px
+    Border 0.5px var(--border), padding 12px
+    Header: ícone HL + título da sessão + data
+    Preview da query em itálico 12px
+    Botão "Abrir sessão" →  navega para a arena
+      com essa sessão carregada
+    Ao criar: abre modal para escolher sessão
+      da biblioteca (lista com busca)
+
+INTERACÇÕES DOS BLOCOS:
+
+  Cada bloco tem (visível ao hover):
+    Handle ⠿ à esquerda para drag-and-drop
+      Reordenação via drag — actualiza order
+      via PATCH /api/workspaces/[id]/blocks
+    Botão × à direita para apagar
+    Botão + abaixo para inserir novo bloco
+
+  Auto-save: debounce 1s após edição
+    PATCH /api/workspaces/[id]/blocks/[blockId]
+    Indicador "Guardado" / "A guardar..." no header
+
+INTEGRAÇÃO COM A ARENA:
+
+  No SynthesisPanel, adiciona botão
+  "→ Adicionar ao Workspace"
+  Clique → modal para escolher workspace existente
+    ou criar novo
+  Ao confirmar: cria bloco tipo 'session-ref'
+    + bloco tipo 'insight' com o texto da síntese
+
+  No bloco de tags/highlights da arena,
+  botão "→ Workspace" por highlight:
+    Cria bloco tipo 'quote' com o texto destacado
+    e atribuição ao modelo
+
+EXPORTAÇÃO DO WORKSPACE:
+
+  Markdown: cada bloco convertido para MD
+    heading → ## texto
+    text    → texto normal
+    quote   → > texto\n> — atribuição
+    insight → > **INSIGHT:** texto
+    divider → ---
+    session-ref → [Sessão: título](link)
+
+  PDF: usa jsPDF, mesmo estilo das sessões
+    Página de capa com título e descrição
+    Cada bloco renderizado com estilo próprio
+
+  EPUB: capítulo único com todos os blocos
+
+NAVEGAÇÃO PRINCIPAL:
+
+  Adiciona "Workspace" à sidebar principal
+  entre Biblioteca e Configuração:
+    Ícone: □ (quadrado simples)
+    Rota: /workspace
+  Atalho de teclado: Ctrl+4
