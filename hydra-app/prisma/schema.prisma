@@ -7,6 +7,15 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Project {
+  id         String      @id @default(cuid())
+  name       String
+  color      String      @default("#7A9A6A")
+  createdAt  DateTime    @default(now())
+  sessions   Session[]
+  workspaces Workspace[]
+}
+
 model Session {
   id        String     @id @default(cuid())
   title     String
@@ -15,8 +24,10 @@ model Session {
   voices    Int        @default(8)
   synthesis String?
   notes     String?
+  projectId String?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  project   Project?   @relation(fields: [projectId], references: [id])
   responses Response[]
   tags      Tag[]
 }
@@ -34,4 +45,26 @@ model Tag {
   name      String
   sessionId String
   session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Workspace {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  projectId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project? @relation(fields: [projectId], references: [id])
+  blocks      Block[]
+}
+
+model Block {
+  id          String    @id @default(cuid())
+  workspaceId String
+  type        String
+  content     String?
+  meta        String?
+  order       Int
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }

@@ -28,6 +28,16 @@ function IconLibrary() {
   );
 }
 
+function IconWorkspace() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="12" height="12" rx="1.5" />
+      <line x1="2" y1="6"  x2="14" y2="6" />
+      <line x1="6" y1="6"  x2="6"  y2="14" />
+    </svg>
+  );
+}
+
 function IconSettings() {
   return (
     <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round">
@@ -118,9 +128,10 @@ function groupByDate(sessions: SessionItem[]): SessionGroups {
 // ── component ─────────────────────────────────────────────────────────────────
 
 const NAV = [
-  { href: '/',          label: 'Arena',        Icon: IconArena    },
-  { href: '/library',   label: 'Biblioteca',   Icon: IconLibrary  },
-  { href: '/settings',  label: 'Configuração', Icon: IconSettings },
+  { href: '/',           label: 'Arena',        Icon: IconArena     },
+  { href: '/library',    label: 'Biblioteca',   Icon: IconLibrary   },
+  { href: '/workspace',  label: 'Workspace',    Icon: IconWorkspace },
+  { href: '/settings',   label: 'Configuração', Icon: IconSettings  },
 ];
 
 const s: Record<string, React.CSSProperties> = {

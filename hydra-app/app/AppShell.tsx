@@ -28,6 +28,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         router.push('/library');
       } else if (e.key === '3') {
         e.preventDefault();
+        router.push('/workspace');
+      } else if (e.key === '4') {
+        e.preventDefault();
         router.push('/settings');
       } else if ((e.key === 't' || e.key === 'T') && e.shiftKey) {
         e.preventDefault();
