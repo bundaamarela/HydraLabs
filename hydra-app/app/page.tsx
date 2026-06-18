@@ -57,6 +57,7 @@ export default function ArenaPage() {
   const [query, setQuery]         = useState('');
   const [mode, setMode]           = useState<ModeId>('raciocinio');
   const [density, setDensity]     = useState<2 | 3 | 6>(3);
+  const [grounding, setGrounding] = useState(false);
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
   const [panelStates, setPanelStates] = useState<Partial<Record<ModelId, ModelState>>>(INITIAL_STATES());
   const [phase, setPhase]         = useState<ArenaPhase>('idle');
@@ -89,6 +90,7 @@ export default function ArenaPage() {
     onDone: (modelId: ModelId) => void,
     onError: (modelId: ModelId, err: string) => void,
     onAllDone: () => void,
+    onSources?: (modelId: ModelId, sources: { url: string; title?: string }[]) => void,
   ) {
     const reader = body.getReader();
     const decoder = new TextDecoder();
@@ -113,9 +115,10 @@ export default function ArenaPage() {
             return;
           }
           if (evt.model) {
-            if (evt.token !== undefined) onToken(evt.model as ModelId, evt.token, evt.kind);
-            else if (evt.done)           onDone(evt.model as ModelId);
-            else if (evt.error)          onError(evt.model as ModelId, evt.error);
+            if (evt.kind === 'sources' && evt.sources) onSources?.(evt.model as ModelId, evt.sources);
+            else if (evt.token !== undefined)          onToken(evt.model as ModelId, evt.token, evt.kind);
+            else if (evt.done)                         onDone(evt.model as ModelId);
+            else if (evt.error)                        onError(evt.model as ModelId, evt.error);
           }
         } catch { /* skip malformed */ }
       }
@@ -207,7 +210,7 @@ export default function ArenaPage() {
       const resp = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: submittedQuery, mode, models: activeIds, keys: readApiKeys(), roles: readRoles(), useRoles: readUseRoles() }),
+        body: JSON.stringify({ query: submittedQuery, mode, models: activeIds, keys: readApiKeys(), roles: readRoles(), useRoles: readUseRoles(), grounding }),
         signal: abortRef.current.signal,
       });
 
@@ -277,6 +280,11 @@ export default function ArenaPage() {
           // Start synthesis
           await runSynthesis(submittedQuery, finalStates);
         },
+        (modelId, srcs) => {
+          const prev = finalStates[modelId] ?? { status: 'streaming' as PanelStatus, content: '' };
+          finalStates[modelId] = { ...prev, sources: srcs };
+          updatePanel(modelId, { sources: srcs });
+        },
       );
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
@@ -320,7 +328,7 @@ export default function ArenaPage() {
         <QueryBubble query={query} />
 
         {query && (
-          <PanelGrid states={panelStates} density={density} />
+          <PanelGrid states={panelStates} density={density} grounding={grounding} />
         )}
 
         {(synthesisStatus !== 'idle') && (
@@ -354,6 +362,8 @@ export default function ArenaPage() {
         onModeSelect={setMode}
         onSubmit={handleSubmit}
         disabled={isRunning}
+        grounding={grounding}
+        onGrounding={setGrounding}
       />
     </div>
   );

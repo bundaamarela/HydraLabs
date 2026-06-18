@@ -8,18 +8,20 @@ export interface ModelState {
   status: PanelStatus;
   content: string;
   reasoning?: string;
+  sources?: { url: string; title?: string }[];
   error?: string;
 }
 
 interface PanelGridProps {
   states: Partial<Record<ModelId, ModelState>>;
   density: 2 | 3 | 6;
+  grounding?: boolean;
 }
 
 const STAGGER = 0.04; // 40ms between panels
 const DEFAULT_STATE: ModelState = { status: 'idle', content: '' };
 
-export function PanelGrid({ states, density }: PanelGridProps) {
+export function PanelGrid({ states, density, grounding }: PanelGridProps) {
   // 6 modelos activos: densidade 3 → grelha 3×2.
   const cols = Math.min(density, 6);
 
@@ -46,6 +48,8 @@ export function PanelGrid({ states, density }: PanelGridProps) {
                 status={state.status}
                 content={state.content}
                 reasoning={state.reasoning}
+                sources={state.sources}
+                grounding={grounding}
                 error={state.error}
               />
             </motion.div>

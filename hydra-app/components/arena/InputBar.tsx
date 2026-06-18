@@ -11,9 +11,11 @@ interface InputBarProps {
   onModeSelect: (m: ModeId) => void;
   onSubmit: (query: string) => void;
   disabled: boolean;
+  grounding: boolean;
+  onGrounding: (v: boolean) => void;
 }
 
-export function InputBar({ mode, onModeSelect, onSubmit, disabled }: InputBarProps) {
+export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, onGrounding }: InputBarProps) {
   const { sidebarW, notesW } = useApp();
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -52,7 +54,7 @@ export function InputBar({ mode, onModeSelect, onSubmit, disabled }: InputBarPro
       padding: '0 16px 16px',
     }}>
       {/* mode chips */}
-      <div style={{ display: 'flex', gap: 5, marginBottom: 8, justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: 5, marginBottom: 8, justifyContent: 'center', alignItems: 'center' }}>
         {QUICK_MODES.map((m) => (
           <button
             key={m}
@@ -70,6 +72,31 @@ export function InputBar({ mode, onModeSelect, onSubmit, disabled }: InputBarPro
             {MODE_LABELS[m].toUpperCase()}
           </button>
         ))}
+
+        {/* separador */}
+        <span style={{ width: 1, height: 14, background: 'var(--border)', margin: '0 2px' }} />
+
+        {/* web grounding toggle (Grok Web+X · Gemini Google Search) */}
+        <button
+          onClick={() => onGrounding(!grounding)}
+          title={grounding ? 'Pesquisa web ao vivo: activa (Grok Web+X · Gemini Google Search)' : 'Pesquisa web ao vivo: desactivada'}
+          style={{
+            fontSize: 10, fontWeight: 600, letterSpacing: '0.4px',
+            padding: '3px 9px', borderRadius: 4,
+            background: grounding ? 'var(--cream)' : 'var(--surface-2)',
+            color: grounding ? 'var(--ink)' : 'var(--fg-muted)',
+            border: '0.5px solid var(--border)',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 5,
+            transition: 'background 0.1s, color 0.1s',
+          }}
+        >
+          <span style={{
+            width: 5, height: 5, borderRadius: '50%',
+            background: grounding ? 'var(--ok)' : 'var(--fg-faint)',
+          }} />
+          WEB
+        </button>
       </div>
 
       {/* input row */}

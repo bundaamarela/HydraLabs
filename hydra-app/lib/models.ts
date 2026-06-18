@@ -37,7 +37,7 @@ export interface ModelConfig {
   name: string;
   disabled: boolean;
   streamDelay: number; // ms offset for staggered animation
-  getModel: (keys: ApiKeys) => LanguageModelV1;
+  getModel: (keys: ApiKeys, opts?: { grounding?: boolean }) => LanguageModelV1;
 }
 
 // Chave do pedido → env var do servidor → undefined (deixa o SDK falhar no pedido).
@@ -82,11 +82,11 @@ export const MODELS: ModelConfig[] = [
     streamDelay: 120,
     // Gemini 3.1 exige uma chave API *restrita* — a Google bloqueia chaves sem
     // restrições a partir de 2026-06-19. Modelo de raciocínio: textStream traz
-    // apenas a resposta, não o "thinking".
-    getModel: (keys) =>
+    // apenas a resposta, não o "thinking". Com grounding, usa Google Search.
+    getModel: (keys, opts) =>
       createGoogleGenerativeAI({
         apiKey: pick(keys.GOOGLE_GENERATIVE_AI_API_KEY, process.env.GOOGLE_GENERATIVE_AI_API_KEY),
-      })('gemini-3.1-pro-preview'),
+      })('gemini-3.1-pro-preview', opts?.grounding ? { useSearchGrounding: true } : undefined),
   },
   {
     id: 'deepseek',

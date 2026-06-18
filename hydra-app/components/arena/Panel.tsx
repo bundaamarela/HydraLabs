@@ -10,6 +10,8 @@ interface PanelProps {
   status: PanelStatus;
   content: string;
   reasoning?: string;
+  sources?: { url: string; title?: string }[];
+  grounding?: boolean;
   error?: string;
 }
 
@@ -104,7 +106,7 @@ function StatusBadge({ status }: { status: PanelStatus }) {
   );
 }
 
-export function Panel({ model, status, content, reasoning, error }: PanelProps) {
+export function Panel({ model, status, content, reasoning, sources, grounding, error }: PanelProps) {
   const wordCount = content ? content.trim().split(/\s+/).filter(Boolean).length : 0;
   const [showReasoning, setShowReasoning] = useState(false);
   useEffect(() => { setShowReasoning(readShowReasoningDefault()); }, []);
@@ -160,8 +162,19 @@ export function Panel({ model, status, content, reasoning, error }: PanelProps) 
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         flexShrink: 0,
       }}>
-        <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--cream)' }}>
-          {model.name}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--cream)' }}>
+            {model.name}
+          </span>
+          {grounding && (model.id === 'grok' || model.id === 'gemini') && (
+            <span style={{
+              fontSize: 8, fontWeight: 700, letterSpacing: '0.5px',
+              color: 'var(--ok)', border: '0.5px solid var(--ok)',
+              borderRadius: 3, padding: '1px 4px', opacity: 0.85,
+            }}>
+              WEB
+            </span>
+          )}
         </span>
         <StatusBadge status={status} />
       </div>
@@ -230,6 +243,39 @@ export function Panel({ model, status, content, reasoning, error }: PanelProps) 
           </span>
         )}
       </div>
+
+      {/* sources — fontes web clicáveis */}
+      {sources && sources.length > 0 && (
+        <div style={{
+          padding: '8px 12px',
+          borderTop: '0.5px solid var(--border)',
+          display: 'flex', flexDirection: 'column', gap: 4,
+          flexShrink: 0,
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.5px', color: 'var(--fg-faint)', textTransform: 'uppercase' }}>
+            Fontes
+          </div>
+          {sources.slice(0, 6).map((src, i) => (
+            <a
+              key={i}
+              href={src.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={src.url}
+              style={{
+                fontSize: 10.5, color: 'var(--fg-muted)',
+                textDecoration: 'none',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                transition: 'color 0.1s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cream)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--fg-muted)')}
+            >
+              {i + 1}. {src.title || src.url}
+            </a>
+          ))}
+        </div>
+      )}
 
       {/* footer */}
       {status === 'done' && (
