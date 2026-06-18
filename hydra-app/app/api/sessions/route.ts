@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       title,
       query:     body.query,
       mode:      body.mode,
-      voices:    body.voices ?? 8,
+      voices:    body.voices ?? 6,
       synthesis: body.synthesis,
       notes:     body.notes,
       responses: body.responses

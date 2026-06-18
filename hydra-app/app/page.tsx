@@ -10,18 +10,29 @@ import { ModeSelector } from '@/components/arena/ModeSelector';
 import { InputBar } from '@/components/arena/InputBar';
 import { SynthesisPanel } from '@/components/arena/SynthesisPanel';
 import type { PanelStatus } from '@/components/arena/Panel';
+import type { ApiKeys } from '@/lib/models';
 
 type ArenaPhase = 'idle' | 'running' | 'synthesis' | 'done';
 
 const INITIAL_STATES = (): Partial<Record<ModelId, ModelState>> =>
   Object.fromEntries(MODELS.map((m) => [m.id, { status: 'idle' as PanelStatus, content: '' }]));
 
+// Chaves API guardadas localmente, enviadas em cada pedido ao servidor.
+function readApiKeys(): ApiKeys {
+  try {
+    const raw = localStorage.getItem('hydra_api_keys');
+    return raw ? (JSON.parse(raw) as ApiKeys) : {};
+  } catch {
+    return {};
+  }
+}
+
 export default function ArenaPage() {
   const { sidebarW, notesW, setActiveSessionId } = useApp();
 
   const [query, setQuery]         = useState('');
   const [mode, setMode]           = useState<ModeId>('raciocinio');
-  const [density, setDensity]     = useState<2 | 4 | 8>(4);
+  const [density, setDensity]     = useState<2 | 3 | 6>(3);
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
   const [panelStates, setPanelStates] = useState<Partial<Record<ModelId, ModelState>>>(INITIAL_STATES());
   const [phase, setPhase]         = useState<ArenaPhase>('idle');
@@ -121,7 +132,7 @@ export default function ArenaPage() {
       const resp = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: synthesisQuery, mode: 'sintese', models: ['claude'] }),
+        body: JSON.stringify({ query: synthesisQuery, mode: 'sintese', models: ['claude'], keys: readApiKeys() }),
         signal: abortRef.current?.signal,
       });
 
@@ -172,7 +183,7 @@ export default function ArenaPage() {
       const resp = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: submittedQuery, mode, models: activeIds }),
+        body: JSON.stringify({ query: submittedQuery, mode, models: activeIds, keys: readApiKeys() }),
         signal: abortRef.current.signal,
       });
 

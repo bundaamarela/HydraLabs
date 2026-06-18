@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { MODELS, type ModelId } from '@/lib/models';
+import { ACTIVE_MODELS, type ModelId } from '@/lib/models';
 import { Panel, type PanelStatus } from './Panel';
 
 export interface ModelState {
@@ -12,14 +12,15 @@ export interface ModelState {
 
 interface PanelGridProps {
   states: Partial<Record<ModelId, ModelState>>;
-  density: 2 | 4 | 8;
+  density: 2 | 3 | 6;
 }
 
 const STAGGER = 0.04; // 40ms between panels
 const DEFAULT_STATE: ModelState = { status: 'idle', content: '' };
 
 export function PanelGrid({ states, density }: PanelGridProps) {
-  const cols = density === 2 ? 2 : density === 4 ? 2 : 4;
+  // 6 modelos activos: densidade 3 → grelha 3×2.
+  const cols = Math.min(density, 6);
 
   return (
     <div style={{
@@ -29,7 +30,7 @@ export function PanelGrid({ states, density }: PanelGridProps) {
       padding: '12px 16px',
     }}>
       <AnimatePresence>
-        {MODELS.map((model, index) => {
+        {ACTIVE_MODELS.map((model, index) => {
           const state = states[model.id] ?? DEFAULT_STATE;
           return (
             <motion.div

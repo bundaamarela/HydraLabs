@@ -21,7 +21,7 @@ model Session {
   title     String
   query     String
   mode      String
-  voices    Int        @default(8)
+  voices    Int        @default(6)
   synthesis String?
   notes     String?
   projectId String?

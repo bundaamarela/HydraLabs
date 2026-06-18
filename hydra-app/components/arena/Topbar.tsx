@@ -7,8 +7,8 @@ interface TopbarProps {
   onModeClick: () => void;
   processingCount: number;
   doneCount: number;
-  density: 2 | 4 | 8;
-  onDensity: (d: 2 | 4 | 8) => void;
+  density: 2 | 3 | 6;
+  onDensity: (d: 2 | 3 | 6) => void;
 }
 
 export function Topbar({ mode, onModeClick, processingCount, doneCount, density, onDensity }: TopbarProps) {
@@ -60,7 +60,7 @@ export function Topbar({ mode, onModeClick, processingCount, doneCount, density,
           borderRadius: 6, padding: 2,
           border: '0.5px solid var(--border)',
         }}>
-          {([2, 4, 8] as const).map((d) => (
+          {([2, 3, 6] as const).map((d) => (
             <button
               key={d}
               onClick={() => onDensity(d)}

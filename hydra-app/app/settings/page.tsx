@@ -7,25 +7,21 @@ import { useApp } from '@/app/providers';
 
 type ApiKeys = {
   [K in
-    | 'ANTHROPIC_API_KEY'
     | 'OPENAI_API_KEY'
-    | 'GOOGLE_GENERATIVE_AI_API_KEY'
     | 'XAI_API_KEY'
-    | 'PERPLEXITY_API_KEY'
+    | 'ANTHROPIC_API_KEY'
+    | 'GOOGLE_GENERATIVE_AI_API_KEY'
     | 'DEEPSEEK_API_KEY'
-    | 'MISTRAL_API_KEY'
-    | 'ZAI_API_KEY']?: string;
+    | 'MOONSHOT_API_KEY']?: string;
 };
 
 const KEY_LABELS: { key: keyof ApiKeys; label: string; model: string }[] = [
-  { key: 'ANTHROPIC_API_KEY',            label: 'Anthropic',  model: 'Claude 3.5 Sonnet'    },
-  { key: 'OPENAI_API_KEY',               label: 'OpenAI',     model: 'GPT-4o'                },
-  { key: 'GOOGLE_GENERATIVE_AI_API_KEY', label: 'Google',     model: 'Gemini 1.5 Pro'        },
-  { key: 'XAI_API_KEY',                  label: 'xAI',        model: 'Grok-2'                },
-  { key: 'PERPLEXITY_API_KEY',           label: 'Perplexity', model: 'Sonar Large'           },
-  { key: 'DEEPSEEK_API_KEY',             label: 'DeepSeek',   model: 'DeepSeek-R1'           },
-  { key: 'MISTRAL_API_KEY',              label: 'Mistral',    model: 'Mistral Large 2'       },
-  { key: 'ZAI_API_KEY',                  label: 'Z.ai',       model: 'GLM-4 Plus'            },
+  { key: 'OPENAI_API_KEY',               label: 'OpenAI',     model: 'GPT-5.5'             },
+  { key: 'XAI_API_KEY',                  label: 'xAI',        model: 'Grok 4.3'            },
+  { key: 'ANTHROPIC_API_KEY',            label: 'Anthropic',  model: 'Claude Sonnet 4.6'   },
+  { key: 'GOOGLE_GENERATIVE_AI_API_KEY', label: 'Google',     model: 'Gemini 3.1 Pro'      },
+  { key: 'DEEPSEEK_API_KEY',             label: 'DeepSeek',   model: 'DeepSeek V4 Pro'     },
+  { key: 'MOONSHOT_API_KEY',             label: 'Moonshot',   model: 'Kimi K2.6'           },
 ];
 
 const STORAGE_KEY = 'hydra_api_keys';
@@ -475,7 +471,7 @@ export default function SettingsPage() {
         }}>
           {[
             { label: 'Versão',       value: '1.0.0' },
-            { label: 'Modelos',      value: '8 activos + 1 em breve' },
+            { label: 'Modelos',      value: '6 ativos' },
             { label: 'Base de dados', value: 'SQLite (local)' },
             { label: 'Framework',    value: 'Next.js 14 + Vercel AI SDK' },
           ].map(({ label, value }) => (

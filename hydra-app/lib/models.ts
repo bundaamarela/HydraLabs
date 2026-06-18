@@ -1,102 +1,148 @@
-import { anthropic } from '@ai-sdk/anthropic';
-import { openai, createOpenAI } from '@ai-sdk/openai';
-import { google } from '@ai-sdk/google';
-import { xai } from '@ai-sdk/xai';
-import { mistral } from '@ai-sdk/mistral';
+import { createOpenAI } from '@ai-sdk/openai';
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { LanguageModelV1 } from 'ai';
 
 export type ModelId =
-  | 'claude'
   | 'chatgpt'
-  | 'gemini'
   | 'grok'
-  | 'perplexity'
+  | 'claude'
+  | 'gemini'
   | 'deepseek'
+  | 'kimi'
+  | 'perplexity'
   | 'mistral'
   | 'zai'
   | 'manus';
 
 export type ModeId = 'rapido' | 'raciocinio' | 'pesquisa' | 'investigacao' | 'sintese';
 
+/**
+ * Chaves API por pedido — lidas no cliente do localStorage `hydra_api_keys`
+ * e reenviadas em cada chamada. Quando ausentes, cai-se para a env var
+ * correspondente no servidor.
+ */
+export interface ApiKeys {
+  OPENAI_API_KEY?: string;
+  XAI_API_KEY?: string;
+  ANTHROPIC_API_KEY?: string;
+  GOOGLE_GENERATIVE_AI_API_KEY?: string;
+  DEEPSEEK_API_KEY?: string;
+  MOONSHOT_API_KEY?: string;
+}
+
 export interface ModelConfig {
   id: ModelId;
   name: string;
   disabled: boolean;
   streamDelay: number; // ms offset for staggered animation
-  getModel: () => LanguageModelV1;
+  getModel: (keys: ApiKeys) => LanguageModelV1;
 }
 
-const perplexityClient = createOpenAI({
-  baseURL: 'https://api.perplexity.ai',
-  apiKey: process.env.PERPLEXITY_API_KEY ?? '',
-});
-
-const deepseekClient = createOpenAI({
-  baseURL: 'https://api.deepseek.com',
-  apiKey: process.env.DEEPSEEK_API_KEY ?? '',
-});
-
-const zaiClient = createOpenAI({
-  baseURL: 'https://api.z.ai/api/paas/v4',
-  apiKey: process.env.ZAI_API_KEY ?? '',
-});
+// Chave do pedido → env var do servidor → undefined (deixa o SDK falhar no pedido).
+const pick = (fromKeys: string | undefined, envVar: string | undefined) =>
+  fromKeys || envVar || undefined;
 
 export const MODELS: ModelConfig[] = [
-  {
-    id: 'claude',
-    name: 'Claude',
-    disabled: false,
-    streamDelay: 0,
-    getModel: () => anthropic('claude-sonnet-4-20250514'),
-  },
   {
     id: 'chatgpt',
     name: 'ChatGPT',
     disabled: false,
-    streamDelay: 40,
-    getModel: () => openai('gpt-4o'),
-  },
-  {
-    id: 'gemini',
-    name: 'Gemini',
-    disabled: false,
-    streamDelay: 80,
-    getModel: () => google('gemini-1.5-pro'),
+    streamDelay: 0,
+    getModel: (keys) =>
+      createOpenAI({ apiKey: pick(keys.OPENAI_API_KEY, process.env.OPENAI_API_KEY) })('gpt-5.5'),
   },
   {
     id: 'grok',
     name: 'Grok',
     disabled: false,
-    streamDelay: 60,
-    getModel: () => xai('grok-2'),
+    streamDelay: 40,
+    getModel: (keys) =>
+      createOpenAICompatible({
+        name: 'xai',
+        baseURL: 'https://api.x.ai/v1',
+        apiKey: pick(keys.XAI_API_KEY, process.env.XAI_API_KEY),
+      })('grok-4.3'),
   },
   {
-    id: 'perplexity',
-    name: 'Perplexity',
+    id: 'claude',
+    name: 'Claude',
     disabled: false,
-    streamDelay: 100,
-    getModel: () => perplexityClient('sonar-pro'),
+    streamDelay: 80,
+    getModel: (keys) =>
+      createAnthropic({ apiKey: pick(keys.ANTHROPIC_API_KEY, process.env.ANTHROPIC_API_KEY) })(
+        'claude-sonnet-4-6',
+      ),
+  },
+  {
+    id: 'gemini',
+    name: 'Gemini',
+    disabled: false,
+    streamDelay: 120,
+    // Gemini 3.1 exige uma chave API *restrita* — a Google bloqueia chaves sem
+    // restrições a partir de 2026-06-19. Modelo de raciocínio: textStream traz
+    // apenas a resposta, não o "thinking".
+    getModel: (keys) =>
+      createGoogleGenerativeAI({
+        apiKey: pick(keys.GOOGLE_GENERATIVE_AI_API_KEY, process.env.GOOGLE_GENERATIVE_AI_API_KEY),
+      })('gemini-3.1-pro-preview'),
   },
   {
     id: 'deepseek',
     name: 'DeepSeek',
     disabled: false,
-    streamDelay: 130,
-    getModel: () => deepseekClient('deepseek-chat'),
+    streamDelay: 160,
+    // Modelo de raciocínio: textStream traz só a resposta, não a cadeia de pensamento.
+    getModel: (keys) =>
+      createOpenAICompatible({
+        name: 'deepseek',
+        baseURL: 'https://api.deepseek.com',
+        apiKey: pick(keys.DEEPSEEK_API_KEY, process.env.DEEPSEEK_API_KEY),
+      })('deepseek-v4-pro'),
+  },
+  {
+    id: 'kimi',
+    name: 'Kimi',
+    disabled: false,
+    streamDelay: 200,
+    // Moonshot Kimi — modelo de raciocínio. NÃO definir temperature/top_p/n
+    // (são fixados pelo modo). textStream traz só a resposta.
+    getModel: (keys) =>
+      createOpenAICompatible({
+        name: 'moonshot',
+        baseURL: 'https://api.moonshot.ai/v1',
+        apiKey: pick(keys.MOONSHOT_API_KEY, process.env.MOONSHOT_API_KEY),
+      })('kimi-k2.6'),
+  },
+
+  // ── desactivados — config preservada, nunca despachados (ver orchestrator) ──
+  {
+    id: 'perplexity',
+    name: 'Perplexity',
+    disabled: true,
+    streamDelay: 0,
+    getModel: () => {
+      throw new Error('Perplexity desactivado');
+    },
   },
   {
     id: 'mistral',
     name: 'Mistral',
-    disabled: false,
-    streamDelay: 90,
-    getModel: () => mistral('mistral-large-latest'),
+    disabled: true,
+    streamDelay: 0,
+    getModel: () => {
+      throw new Error('Mistral desactivado');
+    },
   },
   {
     id: 'zai',
     name: 'Z.ai GLM',
-    disabled: false,
-    streamDelay: 50,
-    getModel: () => zaiClient('glm-5.1'),
+    disabled: true,
+    streamDelay: 0,
+    getModel: () => {
+      throw new Error('Z.ai desactivado');
+    },
   },
   {
     id: 'manus',
@@ -141,5 +187,5 @@ export const MODE_DESCRIPTIONS: Record<ModeId, { desc: string; hint: string }> =
   raciocinio:   { desc: 'Cadeia de pensamento. Respostas exaustivas.', hint: 'pensa antes'   },
   pesquisa:     { desc: 'Grounding factual. Fontes priorizadas.',       hint: 'web · papers'  },
   investigacao: { desc: 'Análise profunda. Pressupostos mapeados.',     hint: 'profundo'      },
-  sintese:      { desc: 'Síntese automática das 8 vozes.',              hint: 'interno'       },
+  sintese:      { desc: 'Síntese automática das 6 vozes.',              hint: 'interno'       },
 };

@@ -5,7 +5,7 @@ import { AppShell } from './AppShell';
 
 export const metadata: Metadata = {
   title: 'Hydra Labs',
-  description: 'Consulta 8 inteligências em simultâneo.',
+  description: 'Consulta 6 inteligências em simultâneo.',
 };
 
 export default function RootLayout({
