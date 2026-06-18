@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import type { ModelConfig } from '@/lib/models';
 
 export type PanelStatus = 'idle' | 'processing' | 'streaming' | 'done' | 'error';
@@ -8,7 +9,27 @@ interface PanelProps {
   model: ModelConfig;
   status: PanelStatus;
   content: string;
+  reasoning?: string;
   error?: string;
+}
+
+// Default global de mostrar/ocultar raciocínio (hydra_prefs.showReasoning).
+function readShowReasoningDefault(): boolean {
+  try {
+    const raw = localStorage.getItem('hydra_prefs');
+    if (!raw) return false;
+    return (JSON.parse(raw) as { showReasoning?: boolean }).showReasoning === true;
+  } catch {
+    return false;
+  }
+}
+
+function IconChevron() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="4,2.5 8,6 4,9.5" />
+    </svg>
+  );
 }
 
 function ProcessingDots() {
@@ -83,8 +104,10 @@ function StatusBadge({ status }: { status: PanelStatus }) {
   );
 }
 
-export function Panel({ model, status, content, error }: PanelProps) {
+export function Panel({ model, status, content, reasoning, error }: PanelProps) {
   const wordCount = content ? content.trim().split(/\s+/).filter(Boolean).length : 0;
+  const [showReasoning, setShowReasoning] = useState(false);
+  useEffect(() => { setShowReasoning(readShowReasoningDefault()); }, []);
 
   if (model.disabled) {
     return (
@@ -143,6 +166,37 @@ export function Panel({ model, status, content, error }: PanelProps) {
         <StatusBadge status={status} />
       </div>
 
+      {/* reasoning disclosure — colapsado por defeito, acima da resposta */}
+      {reasoning && status !== 'idle' && (
+        <div style={{ borderBottom: '0.5px solid var(--border)', flexShrink: 0, background: 'var(--surface-2)' }}>
+          <button
+            onClick={() => setShowReasoning((v) => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              width: '100%', padding: '7px 12px',
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--fg-muted)', fontSize: 10, fontWeight: 600,
+              letterSpacing: '0.5px', textTransform: 'uppercase',
+            }}
+            title={showReasoning ? 'Ocultar raciocínio' : 'Mostrar raciocínio'}
+          >
+            <span style={{ display: 'flex', transform: showReasoning ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>
+              <IconChevron />
+            </span>
+            Raciocínio
+          </button>
+          {showReasoning && (
+            <div style={{
+              padding: '0 12px 10px', fontSize: 11.5,
+              color: 'var(--fg-muted)', lineHeight: 1.6,
+              whiteSpace: 'pre-wrap', maxHeight: 220, overflowY: 'auto',
+            }}>
+              {reasoning}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* body */}
       <div style={{
         flex: 1, padding: '12px 14px',
@@ -154,17 +208,21 @@ export function Panel({ model, status, content, error }: PanelProps) {
         )}
         {status === 'processing' && <ProcessingDots />}
         {(status === 'streaming' || status === 'done') && (
-          <>
-            <SimpleMarkdown text={content} />
-            {status === 'streaming' && (
-              <span style={{
-                display: 'inline-block', width: 2, height: 13,
-                background: 'var(--cream)',
-                marginLeft: 1, verticalAlign: 'text-bottom',
-                animation: 'blink 0.8s step-end infinite',
-              }} />
-            )}
-          </>
+          content ? (
+            <>
+              <SimpleMarkdown text={content} />
+              {status === 'streaming' && (
+                <span style={{
+                  display: 'inline-block', width: 2, height: 13,
+                  background: 'var(--cream)',
+                  marginLeft: 1, verticalAlign: 'text-bottom',
+                  animation: 'blink 0.8s step-end infinite',
+                }} />
+              )}
+            </>
+          ) : status === 'streaming' ? (
+            <span style={{ color: 'var(--fg-faint)', fontSize: 12 }}>a pensar…</span>
+          ) : null
         )}
         {status === 'error' && (
           <span style={{ color: 'var(--err)', fontSize: 12 }}>

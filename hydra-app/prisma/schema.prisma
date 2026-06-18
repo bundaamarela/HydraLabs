@@ -37,6 +37,7 @@ model Response {
   sessionId String
   model     String
   content   String
+  reasoning String?
   session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 

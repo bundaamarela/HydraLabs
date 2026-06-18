@@ -7,6 +7,7 @@ import { Panel, type PanelStatus } from './Panel';
 export interface ModelState {
   status: PanelStatus;
   content: string;
+  reasoning?: string;
   error?: string;
 }
 
@@ -44,6 +45,7 @@ export function PanelGrid({ states, density }: PanelGridProps) {
                 model={model}
                 status={state.status}
                 content={state.content}
+                reasoning={state.reasoning}
                 error={state.error}
               />
             </motion.div>

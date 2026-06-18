@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     query: string;
     mode: string;
     voices?: number;
-    responses?: { model: string; content: string }[];
+    responses?: { model: string; content: string; reasoning?: string }[];
     synthesis?: string;
     notes?: string;
   };
@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
   }
 
   const title = body.title ?? body.query.slice(0, 80);
+  const responsesInput = body.responses ?? [];
 
   const session = await db.session.create({
     data: {
@@ -66,12 +67,25 @@ export async function POST(req: NextRequest) {
       voices:    body.voices ?? 6,
       synthesis: body.synthesis,
       notes:     body.notes,
-      responses: body.responses
-        ? { create: body.responses }
+      responses: responsesInput.length
+        ? { create: responsesInput.map((r) => ({ model: r.model, content: r.content })) }
         : undefined,
     },
     include: { responses: true },
   });
+
+  // Persiste o reasoning por SQL directo: a coluna existe na BD, mas o client
+  // Prisma gerado pode não a conhecer ainda — raw evita essa dependência de tipos.
+  await Promise.all(
+    session.responses.map(async (resp) => {
+      const match = responsesInput.find((r) => r.model === resp.model);
+      if (match?.reasoning) {
+        try {
+          await db.$executeRaw`UPDATE "Response" SET "reasoning" = ${match.reasoning} WHERE "id" = ${resp.id}`;
+        } catch { /* coluna ausente — ignora */ }
+      }
+    }),
+  );
 
   return NextResponse.json(session, { status: 201 });
 }

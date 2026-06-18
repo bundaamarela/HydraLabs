@@ -85,7 +85,7 @@ export default function ArenaPage() {
 
   async function readSSE(
     body: ReadableStream<Uint8Array>,
-    onToken: (modelId: ModelId, token: string) => void,
+    onToken: (modelId: ModelId, token: string, kind?: 'text' | 'reasoning') => void,
     onDone: (modelId: ModelId) => void,
     onError: (modelId: ModelId, err: string) => void,
     onAllDone: () => void,
@@ -113,7 +113,7 @@ export default function ArenaPage() {
             return;
           }
           if (evt.model) {
-            if (evt.token !== undefined) onToken(evt.model as ModelId, evt.token);
+            if (evt.token !== undefined) onToken(evt.model as ModelId, evt.token, evt.kind);
             else if (evt.done)           onDone(evt.model as ModelId);
             else if (evt.error)          onError(evt.model as ModelId, evt.error);
           }
@@ -166,7 +166,7 @@ export default function ArenaPage() {
 
       await readSSE(
         resp.body,
-        (_mid, token) => setSynthesisContent((c) => c + token),
+        (_mid, token, kind) => { if (kind !== 'reasoning') setSynthesisContent((c) => c + token); },
         () => {},
         () => setSynthesisStatus('error'),
         () => {
@@ -219,25 +219,29 @@ export default function ArenaPage() {
 
       await readSSE(
         resp.body,
-        (modelId, token) => {
-          updatePanel(modelId, {
-            status: 'streaming',
-            content: ((finalStates[modelId]?.content ?? '') + token),
-          });
-          finalStates[modelId] = {
-            status: 'streaming',
-            content: (finalStates[modelId]?.content ?? '') + token,
-          };
+        (modelId, token, kind) => {
+          const prev = finalStates[modelId] ?? { status: 'streaming' as PanelStatus, content: '' };
+          if (kind === 'reasoning') {
+            const reasoning = (prev.reasoning ?? '') + token;
+            finalStates[modelId] = { ...prev, status: 'streaming', reasoning };
+            updatePanel(modelId, { status: 'streaming', reasoning });
+          } else {
+            const content = (prev.content ?? '') + token;
+            finalStates[modelId] = { ...prev, status: 'streaming', content };
+            updatePanel(modelId, { status: 'streaming', content });
+          }
         },
         (modelId) => {
-          const content = finalStates[modelId]?.content ?? '';
+          const prev = finalStates[modelId];
+          const content = prev?.content ?? '';
           updatePanel(modelId, { status: 'done', content });
-          finalStates[modelId] = { status: 'done', content };
+          finalStates[modelId] = { status: 'done', content, reasoning: prev?.reasoning };
           completed.add(modelId);
         },
         (modelId, err) => {
+          const prev = finalStates[modelId];
           updatePanel(modelId, { status: 'error', error: err });
-          finalStates[modelId] = { status: 'error', content: '', error: err };
+          finalStates[modelId] = { status: 'error', content: prev?.content ?? '', reasoning: prev?.reasoning, error: err };
           completed.add(modelId);
         },
         async () => {
@@ -246,9 +250,10 @@ export default function ArenaPage() {
             const next = { ...prev };
             for (const id of activeIds) {
               if (next[id]?.status === 'streaming' || next[id]?.status === 'processing') {
-                const content = next[id]?.content ?? '';
-                next[id] = { status: 'done', content };
-                finalStates[id] = { status: 'done', content };
+                const cur = next[id];
+                const content = cur?.content ?? '';
+                next[id] = { status: 'done', content, reasoning: cur?.reasoning };
+                finalStates[id] = { status: 'done', content, reasoning: cur?.reasoning };
               }
             }
             return next;
@@ -258,7 +263,7 @@ export default function ArenaPage() {
           try {
             const responses = activeIds
               .filter((id) => finalStates[id]?.status === 'done')
-              .map((id) => ({ model: id, content: finalStates[id]!.content }));
+              .map((id) => ({ model: id, content: finalStates[id]!.content, reasoning: finalStates[id]!.reasoning }));
 
             const sess = await fetch('/api/sessions', {
               method: 'POST',
