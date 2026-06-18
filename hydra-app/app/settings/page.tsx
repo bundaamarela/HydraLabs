@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useApp } from '@/app/providers';
+import { ACTIVE_MODELS } from '@/lib/models';
+import { DEFAULT_ROLES } from '@/lib/roles';
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -283,9 +285,18 @@ export default function SettingsPage() {
   const [autoSaveNotes, setAutoSaveNotes] = useState(true);
   const [showWordCount, setShowWordCount] = useState(true);
   const [syntesisAuto, setSyntesisAuto] = useState(true);
+  const [roles, setRoles] = useState<Record<string, string>>({});
+  const [useRoles, setUseRoles] = useState(true);
 
   useEffect(() => {
     setKeys(loadKeys());
+    try {
+      const rawRoles = localStorage.getItem('hydra_model_roles');
+      const stored = rawRoles ? (JSON.parse(rawRoles) as Record<string, string>) : {};
+      setRoles({ ...DEFAULT_ROLES, ...stored } as Record<string, string>);
+    } catch {
+      setRoles({ ...DEFAULT_ROLES } as Record<string, string>);
+    }
     const prefs = localStorage.getItem('hydra_prefs');
     if (prefs) {
       try {
@@ -293,6 +304,7 @@ export default function SettingsPage() {
         if (p.autoSaveNotes  !== undefined) setAutoSaveNotes(p.autoSaveNotes);
         if (p.showWordCount  !== undefined) setShowWordCount(p.showWordCount);
         if (p.syntesisAuto   !== undefined) setSyntesisAuto(p.syntesisAuto);
+        if (p.useRoles       !== undefined) setUseRoles(p.useRoles);
       } catch { /* ignore */ }
     }
   }, []);
@@ -305,9 +317,15 @@ export default function SettingsPage() {
     setSaved(false);
   }, []);
 
+  const handleRoleChange = useCallback((modelId: string, value: string) => {
+    setRoles((prev) => ({ ...prev, [modelId]: value }));
+    setSaved(false);
+  }, []);
+
   function handleSave() {
     saveKeys(keys);
-    localStorage.setItem('hydra_prefs', JSON.stringify({ autoSaveNotes, showWordCount, syntesisAuto }));
+    localStorage.setItem('hydra_model_roles', JSON.stringify(roles));
+    localStorage.setItem('hydra_prefs', JSON.stringify({ autoSaveNotes, showWordCount, syntesisAuto, useRoles }));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -400,6 +418,65 @@ export default function SettingsPage() {
             Apagar todas as chaves
           </button>
         </div>
+      </Section>
+
+      {/* ── model roles ── */}
+      <Section title="Papéis por modelo">
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          paddingBottom: 14, gap: 24,
+        }}>
+          <p style={{ fontSize: 11.5, color: 'var(--fg-muted)', lineHeight: 1.6, margin: 0 }}>
+            Cada modelo responde com uma persona distinta, para gerar perspectivas variadas em vez de seis respostas iguais. A síntese ignora os papéis.
+          </p>
+          <button
+            onClick={() => { setUseRoles((v) => !v); setSaved(false); }}
+            style={{
+              width: 38, height: 22, borderRadius: 11,
+              background: useRoles ? 'var(--cream)' : 'var(--surface-3)',
+              border: '0.5px solid ' + (useRoles ? 'transparent' : 'var(--border)'),
+              cursor: 'pointer', flexShrink: 0, position: 'relative',
+              transition: 'background 0.2s',
+            }}
+            title={useRoles ? 'Usar papéis: activo' : 'Usar papéis: desactivado'}
+          >
+            <span style={{
+              position: 'absolute', top: 3, left: useRoles ? 18 : 3,
+              width: 14, height: 14, borderRadius: '50%',
+              background: useRoles ? 'var(--surface)' : 'var(--fg-faint)',
+              transition: 'left 0.2s, background 0.2s',
+            }} />
+          </button>
+        </div>
+
+        {ACTIVE_MODELS.map((m) => (
+          <div key={m.id} style={{
+            display: 'grid', gridTemplateColumns: '140px 1fr', gap: 12,
+            alignItems: 'flex-start', padding: '10px 0',
+            borderBottom: '0.5px solid var(--border)',
+            opacity: useRoles ? 1 : 0.5,
+            transition: 'opacity 0.15s',
+          }}>
+            <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--cream)', paddingTop: 8 }}>
+              {m.name}
+            </div>
+            <textarea
+              value={roles[m.id] ?? ''}
+              onChange={(e) => handleRoleChange(m.id, e.target.value)}
+              disabled={!useRoles}
+              rows={2}
+              placeholder={DEFAULT_ROLES[m.id] ?? 'Papel deste modelo…'}
+              style={{
+                width: '100%', resize: 'vertical',
+                background: 'var(--surface)',
+                border: '0.5px solid var(--border)',
+                borderRadius: 7, padding: '8px 10px',
+                fontSize: 12, color: 'var(--cream)', lineHeight: 1.5,
+                fontFamily: 'inherit', outline: 'none',
+              }}
+            />
+          </div>
+        ))}
       </Section>
 
       {/* ── preferences ── */}

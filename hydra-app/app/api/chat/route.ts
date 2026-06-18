@@ -10,6 +10,8 @@ interface ChatRequest {
   mode: ModeId;
   models: ModelId[];
   keys?: ApiKeys;
+  roles?: Record<string, string>;
+  useRoles?: boolean;
 }
 
 function encodeSSE(event: StreamToken): string {
@@ -24,7 +26,7 @@ export async function POST(req: NextRequest) {
     return new Response('Bad Request', { status: 400 });
   }
 
-  const { query, mode, models, keys } = body;
+  const { query, mode, models, keys, roles, useRoles } = body;
 
   if (!query || typeof query !== 'string' || query.trim().length === 0) {
     return new Response('query is required', { status: 400 });
@@ -41,9 +43,12 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        await orchestrate(query, mode, models, keys ?? {}, (event) => {
-          controller.enqueue(encoder.encode(encodeSSE(event)));
-        });
+        await orchestrate(
+          { query, mode, models, keys: keys ?? {}, roles, useRoles: useRoles ?? true },
+          (event) => {
+            controller.enqueue(encoder.encode(encodeSSE(event)));
+          },
+        );
       } finally {
         // Signal all streams complete
         controller.enqueue(encoder.encode('data: {"done":true}\n\n'));

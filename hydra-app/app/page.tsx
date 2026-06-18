@@ -11,6 +11,7 @@ import { InputBar } from '@/components/arena/InputBar';
 import { SynthesisPanel } from '@/components/arena/SynthesisPanel';
 import type { PanelStatus } from '@/components/arena/Panel';
 import type { ApiKeys } from '@/lib/models';
+import { DEFAULT_ROLES } from '@/lib/roles';
 
 type ArenaPhase = 'idle' | 'running' | 'synthesis' | 'done';
 
@@ -24,6 +25,29 @@ function readApiKeys(): ApiKeys {
     return raw ? (JSON.parse(raw) as ApiKeys) : {};
   } catch {
     return {};
+  }
+}
+
+// Papéis por modelo (persona): defaults + overrides guardados pelo utilizador.
+function readRoles(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem('hydra_model_roles');
+    const stored = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    return { ...DEFAULT_ROLES, ...stored } as Record<string, string>;
+  } catch {
+    return { ...DEFAULT_ROLES } as Record<string, string>;
+  }
+}
+
+// Toggle "Usar papéis" guardado em hydra_prefs (default: true).
+function readUseRoles(): boolean {
+  try {
+    const raw = localStorage.getItem('hydra_prefs');
+    if (!raw) return true;
+    const p = JSON.parse(raw) as { useRoles?: boolean };
+    return p.useRoles !== false;
+  } catch {
+    return true;
   }
 }
 
@@ -132,7 +156,7 @@ export default function ArenaPage() {
       const resp = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: synthesisQuery, mode: 'sintese', models: ['claude'], keys: readApiKeys() }),
+        body: JSON.stringify({ query: synthesisQuery, mode: 'sintese', models: ['claude'], keys: readApiKeys(), useRoles: false }),
         signal: abortRef.current?.signal,
       });
 
@@ -183,7 +207,7 @@ export default function ArenaPage() {
       const resp = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: submittedQuery, mode, models: activeIds, keys: readApiKeys() }),
+        body: JSON.stringify({ query: submittedQuery, mode, models: activeIds, keys: readApiKeys(), roles: readRoles(), useRoles: readUseRoles() }),
         signal: abortRef.current.signal,
       });
 

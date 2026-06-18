@@ -8,6 +8,17 @@ export interface StreamToken {
   error?: string;
 }
 
+export interface OrchestrateOptions {
+  query: string;
+  mode: ModeId;
+  models: ModelId[];
+  keys: ApiKeys;
+  /** Papéis (personas) por modelo, anexados ao prompt do modo quando activos. */
+  roles?: Partial<Record<ModelId, string>>;
+  /** Quando false, ignora os papéis (comportamento simples). Default: true. */
+  useRoles?: boolean;
+}
+
 const TIMEOUT_MS = 30_000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -20,13 +31,11 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 export async function orchestrate(
-  query: string,
-  mode: ModeId,
-  modelIds: ModelId[],
-  keys: ApiKeys,
+  opts: OrchestrateOptions,
   onToken: (event: StreamToken) => void,
 ): Promise<void> {
-  const systemPrompt = SYSTEM_PROMPTS[mode];
+  const { query, mode, models: modelIds, keys, roles, useRoles = true } = opts;
+  const basePrompt = SYSTEM_PROMPTS[mode];
 
   // Despacha apenas modelos activos e pedidos. Os desactivados ficam de fora.
   const activeModels = MODELS.filter(
@@ -36,9 +45,13 @@ export async function orchestrate(
   await Promise.allSettled(
     activeModels.map(async (modelConfig) => {
       try {
+        // Prompt final = prompt do modo + (papel do modelo, quando activo).
+        const role = useRoles ? roles?.[modelConfig.id]?.trim() : undefined;
+        const system = role ? `${basePrompt}\n\n${role}` : basePrompt;
+
         const result = streamText({
           model: modelConfig.getModel(keys),
-          system: systemPrompt,
+          system,
           messages: [{ role: 'user', content: query }],
         });
 
