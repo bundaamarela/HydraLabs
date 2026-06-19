@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useApp } from './providers';
+import { readTheme, densityToGrid } from '@/lib/theme';
 import { ACTIVE_MODELS, MODELS, type CrossAction, type ModelId, type ModeId } from '@/lib/models';
 import { Topbar } from '@/components/arena/Topbar';
 import { QueryBubble } from '@/components/arena/QueryBubble';
@@ -68,6 +69,9 @@ export default function ArenaPage() {
   const [synthesisStatus, setSynthesisStatus] = useState<PanelStatus>('idle');
   const [synthesisContent, setSynthesisContent] = useState('');
   const abortRef = useRef<AbortController | null>(null);
+
+  // Densidade inicial da grelha vem do preset de aparência (hydra_theme).
+  useEffect(() => { setDensity(densityToGrid(readTheme().density)); }, []);
 
   // ── helpers ──────────────────────────────────────────────────────────────
 

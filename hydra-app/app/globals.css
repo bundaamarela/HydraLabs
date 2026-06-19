@@ -21,6 +21,11 @@
   --ok:        #7A9A6A;
   --err:       #C0705A;
 
+  /* tema personalizável (sobreposto em runtime a partir de hydra_theme) */
+  --accent:    #7A9A6A;
+  --font-ui:   -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  --font-read: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+
   --sb-w:  220px;
   --nt-w:  0px;
 }
@@ -46,8 +51,7 @@ html, body { height: 100%; margin: 0; }
 body {
   background: var(--surface);
   color: var(--cream);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
-    'Helvetica Neue', sans-serif;
+  font-family: var(--font-ui);
   font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -55,6 +59,16 @@ body {
   letter-spacing: -0.1px;
   overflow-x: hidden;
 }
+
+/* superfícies de leitura usam o tipo de leitura; código mantém-se monoespaçado */
+.read { font-family: var(--font-read); }
+.read pre, .read code { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+
+/* presets de densidade (data-density no <html>) — afecta espaçamento do texto */
+[data-density='compacto'] body { font-size: 12px;   line-height: 1.42; }
+[data-density='espacoso'] body { font-size: 14px;   line-height: 1.62; }
+
+::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
 button {
   font: inherit; color: inherit;
   background: none; border: none; padding: 0; cursor: pointer;
@@ -62,7 +76,7 @@ button {
 input, textarea, select { font: inherit; color: inherit; }
 input::placeholder, textarea::placeholder { color: var(--fg-faint); }
 :focus-visible {
-  outline: 1px solid var(--fg-muted);
+  outline: 1px solid var(--accent);
   outline-offset: 2px; border-radius: 3px;
 }
 ::-webkit-scrollbar { width: 3px; }

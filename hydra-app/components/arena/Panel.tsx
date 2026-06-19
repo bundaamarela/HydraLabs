@@ -379,7 +379,7 @@ export function Panel({ model, status, content, reasoning, sources, unsupported,
       )}
 
       {/* body */}
-      <div style={{
+      <div className="read" style={{
         flex: 1, padding: '12px 14px',
         fontSize: 12.5, color: 'var(--cream)',
         lineHeight: 1.65, overflow: 'hidden',

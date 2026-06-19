@@ -4,6 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { useApp } from '@/app/providers';
 import { ACTIVE_MODELS } from '@/lib/models';
 import { DEFAULT_ROLES } from '@/lib/roles';
+import {
+  ACCENT_SWATCHES, FONT_PAIRINGS, DENSITIES, DEFAULT_THEME,
+  readTheme, applyTheme, writeTheme, type ThemeCfg,
+} from '@/lib/theme';
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -287,8 +291,12 @@ export default function SettingsPage() {
   const [syntesisAuto, setSyntesisAuto] = useState(true);
   const [roles, setRoles] = useState<Record<string, string>>({});
   const [useRoles, setUseRoles] = useState(true);
+  const [appearance, setAppearance] = useState<ThemeCfg>(DEFAULT_THEME);
 
   useEffect(() => {
+    const t = readTheme();
+    setAppearance(t);
+    applyTheme(t);
     setKeys(loadKeys());
     try {
       const rawRoles = localStorage.getItem('hydra_model_roles');
@@ -320,6 +328,16 @@ export default function SettingsPage() {
   const handleRoleChange = useCallback((modelId: string, value: string) => {
     setRoles((prev) => ({ ...prev, [modelId]: value }));
     setSaved(false);
+  }, []);
+
+  // Aparência aplica e persiste em tempo real (independente do botão Guardar).
+  const updateAppearance = useCallback((patch: Partial<ThemeCfg>) => {
+    setAppearance((prev) => {
+      const next = { ...prev, ...patch };
+      applyTheme(next);
+      writeTheme(next);
+      return next;
+    });
   }, []);
 
   function handleSave() {
@@ -477,6 +495,99 @@ export default function SettingsPage() {
             />
           </div>
         ))}
+      </Section>
+
+      {/* ── appearance ── */}
+      <Section title="Aparência">
+        {/* accent */}
+        <div style={{ padding: '4px 0 14px', borderBottom: '0.5px solid var(--border)' }}>
+          <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--cream)', marginBottom: 2 }}>Cor de acento</div>
+          <div style={{ fontSize: 11, color: 'var(--fg-muted)', marginBottom: 12 }}>
+            Realça o chrome (foco, selecção). Os acentos por modelo nos painéis mantêm-se.
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            {ACCENT_SWATCHES.map((c) => {
+              const active = appearance.accent.toLowerCase() === c.toLowerCase();
+              return (
+                <button
+                  key={c}
+                  onClick={() => updateAppearance({ accent: c })}
+                  title={c}
+                  style={{
+                    width: 24, height: 24, borderRadius: 6, background: c, cursor: 'pointer',
+                    border: '0.5px solid var(--border)',
+                    boxShadow: active ? `0 0 0 2px var(--surface), 0 0 0 3.5px ${c}` : 'none',
+                  }}
+                />
+              );
+            })}
+            <label style={{ display: 'flex', alignItems: 'center', gap: 7, marginLeft: 4, cursor: 'pointer' }} title="Cor personalizada">
+              <input
+                type="color"
+                value={appearance.accent}
+                onChange={(e) => updateAppearance({ accent: e.target.value })}
+                style={{ width: 24, height: 24, padding: 0, border: '0.5px solid var(--border)', borderRadius: 6, background: 'none', cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: 11, color: 'var(--fg-faint)', fontFamily: 'monospace' }}>{appearance.accent}</span>
+            </label>
+          </div>
+        </div>
+
+        {/* typography */}
+        <div style={{ padding: '14px 0', borderBottom: '0.5px solid var(--border)' }}>
+          <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--cream)', marginBottom: 2 }}>Tipografia</div>
+          <div style={{ fontSize: 11, color: 'var(--fg-muted)', marginBottom: 12 }}>
+            Par de tipos para interface e para leitura (respostas).
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {FONT_PAIRINGS.map((p) => {
+              const active = appearance.pairing === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => updateAppearance({ pairing: p.id, fontUi: p.ui, fontRead: p.read })}
+                  style={{
+                    flex: '1 1 150px', textAlign: 'left', padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
+                    background: active ? 'var(--surface-3)' : 'var(--surface)',
+                    border: '0.5px solid ' + (active ? 'var(--accent)' : 'var(--border)'),
+                    transition: 'background 0.12s, border-color 0.12s',
+                  }}
+                >
+                  <div style={{ fontSize: 14, color: 'var(--cream)', fontFamily: p.sample, marginBottom: 3 }}>{p.label}</div>
+                  <div style={{ fontSize: 10, color: 'var(--fg-faint)', letterSpacing: '0.4px', textTransform: 'uppercase' }}>{p.hint}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* density */}
+        <div style={{ padding: '14px 0 2px' }}>
+          <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--cream)', marginBottom: 2 }}>Densidade</div>
+          <div style={{ fontSize: 11, color: 'var(--fg-muted)', marginBottom: 12 }}>
+            Espaçamento do texto e densidade inicial da grelha de painéis.
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {DENSITIES.map((d) => {
+              const active = appearance.density === d.id;
+              return (
+                <button
+                  key={d.id}
+                  onClick={() => updateAppearance({ density: d.id })}
+                  style={{
+                    padding: '7px 16px', borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                    background: active ? 'var(--cream)' : 'var(--surface)',
+                    color: active ? 'var(--surface)' : 'var(--fg-muted)',
+                    border: '0.5px solid ' + (active ? 'transparent' : 'var(--border)'),
+                    transition: 'background 0.12s, color 0.12s',
+                  }}
+                >
+                  {d.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </Section>
 
       {/* ── preferences ── */}

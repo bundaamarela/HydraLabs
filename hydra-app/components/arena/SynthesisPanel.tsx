@@ -301,7 +301,7 @@ export function SynthesisPanel({ status, content }: SynthesisPanelProps) {
         </div>
 
         {/* body */}
-        <div style={{ padding: '14px 16px' }}>
+        <div className="read" style={{ padding: '14px 16px' }}>
           {status === 'processing' && <ProcessingDots />}
 
           {status === 'streaming' && (
