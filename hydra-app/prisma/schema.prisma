@@ -63,6 +63,14 @@ model CrossExam {
   session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
+// Templates de consulta reutilizáveis (com tokens {{placeholder}} opcionais).
+model PromptTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  body      String
+  createdAt DateTime @default(now())
+}
+
 model Workspace {
   id          String   @id @default(cuid())
   title       String

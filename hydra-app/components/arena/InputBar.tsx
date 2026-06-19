@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useApp } from '@/app/providers';
 import { ACTIVE_MODELS, type ModeId, type ModelId, MODE_LABELS } from '@/lib/models';
 import type { Attachment } from '@/lib/orchestrator';
+import { TemplatesMenu } from './TemplatesMenu';
 
 const QUICK_MODES: ModeId[] = ['rapido', 'raciocinio', 'pesquisa', 'investigacao'];
 
@@ -75,6 +76,20 @@ export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, on
     const ta = e.target;
     ta.style.height = '36px';
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+  };
+
+  // Insere o corpo de um template (com tokens {{placeholder}}) no input.
+  const handleInsertTemplate = (body: string) => {
+    setValue(body);
+    requestAnimationFrame(() => {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      ta.style.height = '36px';
+      ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+      ta.focus();
+      const len = ta.value.length;
+      ta.setSelectionRange(len, len);
+    });
   };
 
   const canSubmit = !disabled && value.trim().length > 0;
@@ -157,6 +172,12 @@ export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, on
           }} />
           WEB
         </button>
+
+        {/* separador */}
+        <span style={{ width: 1, height: 14, background: 'var(--border)', margin: '0 2px' }} />
+
+        {/* templates de consulta reutilizáveis */}
+        <TemplatesMenu currentInput={value} onInsert={handleInsertTemplate} />
       </div>
 
       {/* attachment chip */}
