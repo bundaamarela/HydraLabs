@@ -31,7 +31,7 @@ interface ProjectItem {
   _count: { sessions: number };
 }
 
-const MODES = ['rapido', 'raciocinio', 'pesquisa', 'investigacao', 'sintese'] as const;
+const MODES = ['rapido', 'raciocinio', 'pesquisa', 'investigacao', 'direto', 'consolidacao', 'sintese'] as const;
 type ModeFilter = (typeof MODES)[number] | 'todos';
 
 const MODE_LABELS: Record<string, string> = {
@@ -39,6 +39,8 @@ const MODE_LABELS: Record<string, string> = {
   raciocinio:   'Raciocínio',
   pesquisa:     'Pesquisa',
   investigacao: 'Investigação',
+  direto:       'Directo',
+  consolidacao: 'Consolidação',
   sintese:      'Síntese',
 };
 

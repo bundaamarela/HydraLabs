@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt" data-theme="dark">
+    <html lang="pt" data-theme="dark" suppressHydrationWarning>
       <head>
         {/* Aplica o tema personalizado (hydra_theme) antes de pintar — sem flash. */}
         <script

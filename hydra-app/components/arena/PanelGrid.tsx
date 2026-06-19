@@ -73,7 +73,7 @@ const DEFAULT_STATE: ModelState = { status: 'idle', content: '' };
 function IconGrip() {
   return (
     <svg width="11" height="11" viewBox="0 0 14 14" fill="currentColor">
-      {[3, 7, 11].map((y) => [5, 9].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1" />))}
+      {[3, 7, 11].flatMap((y) => [5, 9].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1" />))}
     </svg>
   );
 }
@@ -264,6 +264,11 @@ export function PanelGrid({ states, models, density, grounding, onCrossExam, onR
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [focused]);
+
+  // Se o modelo em foco sair da ronda (nova selecção), larga o foco — evita grelha vazia.
+  useEffect(() => {
+    if (focused && !models.includes(focused)) setFocused(null);
+  }, [focused, models]);
 
   const update = (patch: Partial<Layout>) =>
     setLayout((l) => { const next = { ...l, ...patch }; writeLayout(next); return next; });
