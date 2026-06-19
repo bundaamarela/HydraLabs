@@ -3,7 +3,9 @@ import { orchestrate, type Attachment, type StreamToken } from '@/lib/orchestrat
 import { MODE_IDS, type ApiKeys, type ModelId, type ModeId } from '@/lib/models';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+// Respostas longas (raciocínio/consolidação) podem demorar; o corte fino fica a
+// cargo do watchdog de inatividade no orquestrador, não deste tecto.
+export const maxDuration = 300;
 
 interface ChatRequest {
   query: string;

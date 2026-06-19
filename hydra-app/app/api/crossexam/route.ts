@@ -3,7 +3,7 @@ import { orchestrate, type StreamToken } from '@/lib/orchestrator';
 import { getModelById, type ApiKeys, type CrossAction, type ModelId } from '@/lib/models';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 interface CrossExamRequest {
   sourceModel: ModelId;

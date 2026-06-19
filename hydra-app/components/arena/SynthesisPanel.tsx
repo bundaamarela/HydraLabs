@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '@/app/providers';
-import type { PanelStatus } from './Panel';
+import { SimpleMarkdown, type PanelStatus } from './Panel';
 
 interface SynthesisPanelProps {
   status: PanelStatus;
@@ -75,12 +75,12 @@ function AddToWorkspaceModal({ synthesisContent, onClose }: {
   const [adding, setAdding]     = useState(false);
   const [done, setDone]         = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     fetch('/api/workspaces')
       .then((r) => r.json())
       .then((data) => { setWorkspaces(data); setLoading(false); })
       .catch(() => setLoading(false));
-  });
+  }, []);
 
   async function addToWorkspace(workspaceId: string) {
     setAdding(true);
@@ -322,7 +322,7 @@ export function SynthesisPanel({ status, content }: SynthesisPanelProps) {
                 if (!meta) {
                   return (
                     <div key={i} style={{ fontSize: 13, color: 'var(--cream)', lineHeight: 1.7 }}>
-                      {block.text}
+                      <SimpleMarkdown text={block.text} />
                     </div>
                   );
                 }
@@ -332,7 +332,7 @@ export function SynthesisPanel({ status, content }: SynthesisPanelProps) {
                       {meta.label}
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--cream)', lineHeight: 1.7 }}>
-                      {block.text}
+                      <SimpleMarkdown text={block.text} />
                     </div>
                   </div>
                 );
@@ -341,7 +341,9 @@ export function SynthesisPanel({ status, content }: SynthesisPanelProps) {
           )}
 
           {status === 'done' && blocks.length === 0 && (
-            <div style={{ fontSize: 13, color: 'var(--cream)', lineHeight: 1.7 }}>{content}</div>
+            <div style={{ fontSize: 13, color: 'var(--cream)', lineHeight: 1.7 }}>
+              <SimpleMarkdown text={content} />
+            </div>
           )}
 
           {status === 'error' && (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import {
   ACTIVE_MODELS, CROSS_ACTIONS, crossExamTag, getModelById,
   MODEL_ACCENTS, MODEL_CAPABILITIES,
@@ -106,41 +106,120 @@ function ProcessingDots() {
   );
 }
 
-function SimpleMarkdown({ text }: { text: string }) {
-  const paragraphs = text.split(/\n\n+/);
-  return (
-    <>
-      {paragraphs.map((para, pi) => {
-        if (para.startsWith('```')) {
-          const inner = para.replace(/^```[^\n]*\n?/, '').replace(/\n?```$/, '');
-          return (
-            <pre key={pi} style={{
-              background: 'var(--surface)',
-              border: '0.5px solid var(--border)',
-              borderRadius: 5,
-              padding: '8px 10px',
-              fontSize: 11.5, overflowX: 'auto',
-              margin: '0 0 8px', lineHeight: 1.6,
-              color: 'var(--cream-2)',
-            }}>
-              <code>{inner}</code>
-            </pre>
-          );
-        }
-        const lines = para.split('\n');
-        return (
-          <p key={pi} style={{ margin: '0 0 8px', lineHeight: 1.65 }}>
-            {lines.map((line, li) => (
-              <span key={li}>
-                {line}
-                {li < lines.length - 1 && <br />}
-              </span>
-            ))}
-          </p>
-        );
-      })}
-    </>
-  );
+const mdPre: CSSProperties = {
+  background: 'var(--surface)',
+  border: '0.5px solid var(--border)',
+  borderRadius: 5,
+  padding: '8px 10px',
+  fontSize: 11.5, overflowX: 'auto',
+  margin: '0 0 8px', lineHeight: 1.6,
+  color: 'var(--cream-2)',
+};
+const mdCode: CSSProperties = {
+  fontFamily: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
+  fontSize: '0.92em',
+  background: 'var(--surface-3)',
+  borderRadius: 3,
+  padding: '0.5px 4px',
+};
+const mdList: CSSProperties = { margin: '0 0 8px', paddingLeft: 18, lineHeight: 1.6 };
+
+// Formatação inline: **negrito**, __negrito__, *itálico*, `código`, [texto](url).
+// Char classes negadas com um único `+` — sem backtracking catastrófico.
+function renderInline(text: string, kp: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  const re = /\*\*([^*]+)\*\*|__([^_]+)__|\*([^*]+)\*|`([^`]+)`|\[([^\]]+)\]\(([^)\s]+)\)/g;
+  let last = 0, i = 0, m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    if (m[1] || m[2]) out.push(<strong key={`${kp}b${i}`}>{m[1] || m[2]}</strong>);
+    else if (m[3]) out.push(<em key={`${kp}i${i}`}>{m[3]}</em>);
+    else if (m[4]) out.push(<code key={`${kp}c${i}`} style={mdCode}>{m[4]}</code>);
+    else if (m[5]) out.push(
+      <a key={`${kp}l${i}`} href={m[6]} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cream)', textDecoration: 'underline' }}>{m[5]}</a>,
+    );
+    last = m.index + m[0].length;
+    i++;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+
+// Renderer markdown leve (sem dependências): títulos, listas, blocos de código,
+// código inline, negrito/itálico e links. Cobre o que os modelos produzem e o
+// que a síntese gera (## CONSENSO / ## DIVERGÊNCIA / ## INSIGHT).
+export function SimpleMarkdown({ text }: { text: string }) {
+  const lines = text.split('\n');
+  const blocks: ReactNode[] = [];
+  let i = 0, key = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // bloco de código cercado por ```
+    if (line.trimStart().startsWith('```')) {
+      const buf: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].trimStart().startsWith('```')) { buf.push(lines[i]); i++; }
+      i++; // salta o fecho
+      blocks.push(<pre key={key++} style={mdPre}><code>{buf.join('\n')}</code></pre>);
+      continue;
+    }
+
+    // título (# … ######)
+    const h = /^(#{1,6})\s+(.*)$/.exec(line);
+    if (h) {
+      const lvl = h[1].length;
+      blocks.push(
+        <div key={key++} style={{ fontSize: lvl <= 2 ? 13.5 : 12.5, fontWeight: 600, color: 'var(--cream)', margin: '10px 0 5px', letterSpacing: '-0.1px' }}>
+          {renderInline(h[2], `h${key}`)}
+        </div>,
+      );
+      i++;
+      continue;
+    }
+
+    // lista (linhas consecutivas com marcador ou número)
+    if (/^\s*([-*•]|\d+\.)\s+/.test(line)) {
+      const ordered = /^\s*\d+\.\s+/.test(line);
+      const items: ReactNode[] = [];
+      while (i < lines.length && /^\s*([-*•]|\d+\.)\s+/.test(lines[i])) {
+        const body = lines[i].replace(/^\s*([-*•]|\d+\.)\s+/, '');
+        items.push(<li key={items.length} style={{ marginBottom: 3 }}>{renderInline(body, `li${key}_${items.length}`)}</li>);
+        i++;
+      }
+      blocks.push(ordered
+        ? <ol key={key++} style={mdList}>{items}</ol>
+        : <ul key={key++} style={mdList}>{items}</ul>);
+      continue;
+    }
+
+    // linha em branco
+    if (line.trim() === '') { i++; continue; }
+
+    // parágrafo: junta linhas consecutivas até um bloco especial ou linha vazia
+    const para: string[] = [];
+    while (
+      i < lines.length && lines[i].trim() !== '' &&
+      !lines[i].trimStart().startsWith('```') &&
+      !/^#{1,6}\s+/.test(lines[i]) &&
+      !/^\s*([-*•]|\d+\.)\s+/.test(lines[i])
+    ) {
+      para.push(lines[i]); i++;
+    }
+    blocks.push(
+      <p key={key++} style={{ margin: '0 0 8px', lineHeight: 1.65 }}>
+        {para.map((l, li) => (
+          <span key={li}>
+            {renderInline(l, `p${key}_${li}`)}
+            {li < para.length - 1 && <br />}
+          </span>
+        ))}
+      </p>,
+    );
+  }
+
+  return <>{blocks}</>;
 }
 
 function StatusBadge({ status }: { status: PanelStatus }) {

@@ -88,16 +88,12 @@ function buildUserContent(
   return { content: parts, unsupported: false };
 }
 
-const TIMEOUT_MS = 30_000;
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), ms),
-    ),
-  ]);
-}
+// Timeout por INATIVIDADE (não total): o watchdog só dispara se o modelo ficar
+// parado este tempo sem emitir nada. Um modelo que está a debitar tokens (mesmo
+// uma resposta longa de raciocínio/consolidação) nunca é cortado — o relógio
+// reinicia a cada parte recebida. O tecto total fica a cargo do maxDuration da
+// função. 90s cobre a latência inicial de modelos de raciocínio antes do 1.º token.
+const IDLE_TIMEOUT_MS = 90_000;
 
 /**
  * Activa "thinking"/reasoning onde o provider/SDK instalado o suporta. As
@@ -161,6 +157,16 @@ export async function orchestrate(
 
   await Promise.allSettled(
     activeModels.map(async (modelConfig) => {
+      // Watchdog de inatividade (fora do try para o catch poder ler idleAborted):
+      // aborta o pedido se o modelo ficar parado IDLE_TIMEOUT_MS sem emitir nada.
+      const ac = new AbortController();
+      let idleAborted = false;
+      let watchdog: ReturnType<typeof setTimeout> | undefined;
+      const armWatchdog = () => {
+        clearTimeout(watchdog);
+        watchdog = setTimeout(() => { idleAborted = true; ac.abort(); }, IDLE_TIMEOUT_MS);
+      };
+
       try {
         // Prompt final = prompt do modo + (papel do modelo, quando activo).
         const role = useRoles ? roles?.[modelConfig.id]?.trim() : undefined;
@@ -179,39 +185,42 @@ export async function orchestrate(
           messages: [{ role: 'user', content }],
           providerOptions: buildProviderOptions(modelConfig.id, grounding, mode),
           maxTokens: MODE_MAX_TOKENS[mode],
+          abortSignal: ac.signal,
         });
 
         const sources: SourceRef[] = [];
 
-        await withTimeout(
-          (async () => {
-            // fullStream separa reasoning, resposta e fontes (source parts).
-            for await (const part of result.fullStream) {
-              if (part.type === 'text-delta') {
-                onToken({ model: modelConfig.id, kind: 'text', token: part.textDelta });
-              } else if (part.type === 'reasoning') {
-                onToken({ model: modelConfig.id, kind: 'reasoning', token: part.textDelta });
-              } else if (part.type === 'source') {
-                const s = part.source;
-                if (s && s.url) sources.push({ url: s.url, title: s.title });
-              } else if (part.type === 'error') {
-                const e = part.error;
-                throw e instanceof Error
-                  ? e
-                  : new Error(typeof e === 'string' ? e : 'erro de stream');
-              }
+        armWatchdog(); // arranca: 1.º token tem de chegar dentro da janela
+        try {
+          // fullStream separa reasoning, resposta e fontes (source parts).
+          for await (const part of result.fullStream) {
+            armWatchdog(); // qualquer actividade reinicia o relógio
+            if (part.type === 'text-delta') {
+              onToken({ model: modelConfig.id, kind: 'text', token: part.textDelta });
+            } else if (part.type === 'reasoning') {
+              onToken({ model: modelConfig.id, kind: 'reasoning', token: part.textDelta });
+            } else if (part.type === 'source') {
+              const s = part.source;
+              if (s && s.url) sources.push({ url: s.url, title: s.title });
+            } else if (part.type === 'error') {
+              const e = part.error;
+              throw e instanceof Error
+                ? e
+                : new Error(typeof e === 'string' ? e : 'erro de stream');
             }
-          })(),
-          TIMEOUT_MS,
-        );
+          }
+        } finally {
+          clearTimeout(watchdog);
+        }
 
         if (sources.length) {
           onToken({ model: modelConfig.id, kind: 'sources', sources });
         }
         onToken({ model: modelConfig.id, done: true });
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : 'erro desconhecido';
+        const message = idleAborted
+          ? 'sem resposta a tempo (timeout de inactividade)'
+          : err instanceof Error ? err.message : 'erro desconhecido';
         onToken({ model: modelConfig.id, error: message });
       }
     }),
