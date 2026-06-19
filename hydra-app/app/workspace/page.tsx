@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useApp } from '@/app/providers';
 import { PageFrame } from '@/components/layout/PageFrame';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -227,6 +229,7 @@ function WorkspaceCard({ ws }: { ws: WorkspaceItem }) {
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function WorkspacePage() {
+  const { isMobile } = useApp();
   const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
   const [loading, setLoading]       = useState(true);
   const [showModal, setShowModal]   = useState(false);
@@ -260,7 +263,7 @@ export default function WorkspacePage() {
             fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer',
           }}
         >
-          <IconPlus /> Novo workspace
+          <IconPlus />{!isMobile && 'Novo workspace'}
         </button>
       }
     >
@@ -268,21 +271,12 @@ export default function WorkspacePage() {
 
       {/* empty state */}
       {!loading && workspaces.length === 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 80, gap: 12, animation: 'fadeSlideUp 0.3s ease' }}>
-          <div style={{ width: 52, height: 52, borderRadius: 13, background: 'var(--surface-2)', border: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <IconWorkspace />
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cream)' }}>Sem workspaces</div>
-          <div style={{ fontSize: 12, color: 'var(--fg-muted)', textAlign: 'center', maxWidth: 300, lineHeight: 1.6 }}>
-            Cria um workspace para consolidar a tua investigação.
-          </div>
-          <button
-            onClick={() => setShowModal(true)}
-            style={{ marginTop: 4, padding: '8px 18px', borderRadius: 8, background: 'var(--cream)', color: 'var(--surface)', fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-          >
-            <IconPlus /> Criar workspace
-          </button>
-        </div>
+        <EmptyState
+          icon={<IconWorkspace />}
+          title="Sem workspaces"
+          description="Cria um workspace para consolidar a tua investigação."
+          action={{ label: 'Criar workspace', onClick: () => setShowModal(true) }}
+        />
       )}
 
       {/* loading */}

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/app/providers';
 import { PageFrame } from '@/components/layout/PageFrame';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -371,14 +372,14 @@ function ProjectSidebar({
     <aside style={{
       width: 180, flexShrink: 0,
       borderRight: '0.5px solid var(--border)',
-      paddingTop: 4,
+      paddingTop: 24,
       height: '100%', overflowY: 'auto',
     }}>
       <div style={{
         fontSize: 9, fontWeight: 500,
         color: 'var(--fg-faint)', letterSpacing: '0.8px',
         textTransform: 'uppercase',
-        padding: '8px 12px 6px',
+        padding: '0 12px 10px',
       }}>
         Projectos
       </div>
@@ -766,25 +767,21 @@ export default function LibraryPage() {
 
         {/* empty state */}
         {!loading && sessions.length === 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 80, gap: 12, animation: 'fadeSlideUp 0.3s ease' }}>
-            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--surface-2)', border: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconSearch />
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cream)' }}>
-              {searchActive ? 'Nenhum resultado' : 'Biblioteca vazia'}
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--fg-muted)', textAlign: 'center', maxWidth: 260, lineHeight: 1.6 }}>
-              {searchActive ? 'Tenta outros termos ou remove os filtros.' : 'Faz uma consulta na Arena para guardar sessões.'}
-            </div>
-            {searchActive && (
-              <button
-                onClick={() => { setSearch(''); setModeFilter('todos'); setProjectFilter(null); }}
-                style={{ marginTop: 4, padding: '7px 16px', borderRadius: 7, fontSize: 12, fontWeight: 500, background: 'var(--surface-2)', color: 'var(--fg-muted)', border: '0.5px solid var(--border)', cursor: 'pointer' }}
-              >
-                Limpar filtros
-              </button>
-            )}
-          </div>
+          searchActive ? (
+            <EmptyState
+              icon={<IconSearch />}
+              title="Nenhum resultado"
+              description="Tenta outros termos ou remove os filtros."
+              action={{ label: 'Limpar filtros', onClick: () => { setSearch(''); setModeFilter('todos'); setProjectFilter(null); } }}
+            />
+          ) : (
+            <EmptyState
+              icon={<IconSearch />}
+              title="Biblioteca vazia"
+              description="Faz uma consulta na Arena para guardar sessões."
+              action={{ label: 'Ir para a Arena', href: '/' }}
+            />
+          )
         )}
 
         {/* loading skeleton */}
