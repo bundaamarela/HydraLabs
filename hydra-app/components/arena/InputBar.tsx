@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { ACTIVE_MODELS, type ModeId, type ModelId, MODE_LABELS } from '@/lib/models';
 import type { Attachment } from '@/lib/orchestrator';
 import { TemplatesMenu } from './TemplatesMenu';
@@ -26,7 +26,15 @@ interface InputBarProps {
   onToggleModel: (id: ModelId) => void;
 }
 
-export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, onGrounding, selectedModels, onToggleModel }: InputBarProps) {
+export interface InputBarHandle {
+  /** Preenche o input com texto, faz autosize e foca o cursor no fim. */
+  insert: (text: string) => void;
+}
+
+export const InputBar = forwardRef<InputBarHandle, InputBarProps>(function InputBar(
+  { mode, onModeSelect, onSubmit, disabled, grounding, onGrounding, selectedModels, onToggleModel },
+  ref,
+) {
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -89,6 +97,9 @@ export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, on
       ta.setSelectionRange(len, len);
     });
   };
+
+  // Exposto ao pai (estado vazio da Arena) para inserir sugestões/templates/sessões.
+  useImperativeHandle(ref, () => ({ insert: handleInsertTemplate }));
 
   const canSubmit = !disabled && value.trim().length > 0;
 
@@ -280,4 +291,4 @@ export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, on
       </div>
     </div>
   );
-}
+});

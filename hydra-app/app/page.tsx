@@ -8,7 +8,8 @@ import { PageFrame } from '@/components/layout/PageFrame';
 import { QueryBubble } from '@/components/arena/QueryBubble';
 import { PanelGrid, type ModelState, type CrossExamTurn } from '@/components/arena/PanelGrid';
 import { ModeSelector } from '@/components/arena/ModeSelector';
-import { InputBar } from '@/components/arena/InputBar';
+import { InputBar, type InputBarHandle } from '@/components/arena/InputBar';
+import { ArenaEmpty } from '@/components/arena/ArenaEmpty';
 import { SynthesisPanel } from '@/components/arena/SynthesisPanel';
 import type { PanelStatus } from '@/components/arena/Panel';
 import type { ApiKeys } from '@/lib/models';
@@ -69,9 +70,22 @@ export default function ArenaPage() {
   const [synthesisStatus, setSynthesisStatus] = useState<PanelStatus>('idle');
   const [synthesisContent, setSynthesisContent] = useState('');
   const abortRef = useRef<AbortController | null>(null);
+  const inputBarRef = useRef<InputBarHandle>(null);
 
   // Densidade inicial da grelha vem do preset de aparência (hydra_theme).
   useEffect(() => { setDensity(densityToGrid(readTheme().density)); }, []);
+
+  // Estado vazio → preenche o input com uma sugestão/template.
+  const handlePickPrompt = useCallback((text: string) => {
+    inputBarRef.current?.insert(text);
+  }, []);
+
+  // Estado vazio → reabre uma sessão recente (define o modo + pergunta no input).
+  const handleReopen = useCallback((s: { query: string; mode: string }) => {
+    const m = s.mode as ModeId;
+    if (MODE_LABELS[m]) setMode(m);
+    inputBarRef.current?.insert(s.query);
+  }, []);
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -528,28 +542,17 @@ export default function ArenaPage() {
         )}
 
         {!query && (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            minHeight: '100%',
-            flexDirection: 'column', gap: 12,
-          }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 9,
-              background: 'var(--cream)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 14, fontWeight: 600, color: 'var(--ink)',
-              letterSpacing: '-0.3px',
-            }}>
-              HL
-            </div>
-            <p style={{ fontSize: 13, color: 'var(--fg-muted)', letterSpacing: '-0.1px' }}>
-              Consulta {ACTIVE_MODELS.length} inteligências em simultâneo.
-            </p>
-          </div>
+          <ArenaEmpty
+            models={selectedModels}
+            density={density}
+            onPickPrompt={handlePickPrompt}
+            onReopen={handleReopen}
+          />
         )}
       </div>
 
       <InputBar
+        ref={inputBarRef}
         mode={mode}
         onModeSelect={handleModeSelect}
         onSubmit={handleSubmit}
