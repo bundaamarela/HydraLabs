@@ -14,7 +14,21 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  return NextResponse.json(session);
+  // Cruzamentos por SQL directo (o client gerado pode não conhecer o modelo
+  // enquanto o dev server segura o motor Prisma). Falha → lista vazia.
+  type CrossExamRow = {
+    sourceModel: string; targetModel: string; action: string; content: string; reasoning: string | null;
+  };
+  let crossExams: CrossExamRow[] = [];
+  try {
+    crossExams = await db.$queryRaw<CrossExamRow[]>`
+      SELECT "sourceModel", "targetModel", "action", "content", "reasoning"
+      FROM "CrossExam" WHERE "sessionId" = ${params.id}
+      ORDER BY "createdAt" ASC
+    `;
+  } catch { /* tabela ausente / motor — devolve vazio */ }
+
+  return NextResponse.json({ ...session, crossExams });
 }
 
 // PATCH /api/sessions/:id — update notes or synthesis

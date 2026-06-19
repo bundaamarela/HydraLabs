@@ -186,6 +186,21 @@ export function getModelById(id: ModelId): ModelConfig | undefined {
   return MODELS.find((m) => m.id === id);
 }
 
+/** Acções de cruzamento modelo-vs-modelo (cross-examination). */
+export type CrossAction = 'criticar' | 'refutar' | 'melhorar';
+
+export const CROSS_ACTIONS: { id: CrossAction; label: string }[] = [
+  { id: 'criticar', label: 'Criticar' },
+  { id: 'refutar',  label: 'Refutar'  },
+  { id: 'melhorar', label: 'Melhorar' },
+];
+
+/** Etiqueta do turno de cruzamento, por acção (ex.: "Crítica a Claude"). */
+export function crossExamTag(action: CrossAction, sourceName: string): string {
+  const verb = action === 'criticar' ? 'Crítica a' : action === 'refutar' ? 'Refutação a' : 'Melhoria de';
+  return `${verb} ${sourceName}`;
+}
+
 export const SYSTEM_PROMPTS: Record<ModeId, string> = {
   rapido:
     'Responde directamente. Máximo 120 palavras. Sem preâmbulo, sem conclusão desnecessária.',

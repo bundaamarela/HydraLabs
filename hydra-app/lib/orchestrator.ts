@@ -39,6 +39,8 @@ export interface OrchestrateOptions {
   grounding?: boolean;
   /** Anexo (imagem/PDF/texto). Modelos sem suporte recebem só o texto. */
   attachment?: Attachment;
+  /** Substitui o prompt de sistema do modo (ex.: cross-examination). */
+  system?: string;
 }
 
 // Conteúdo da mensagem de utilizador: string simples ou partes multimodais.
@@ -150,7 +152,7 @@ export async function orchestrate(
 ): Promise<void> {
   const { query, mode, models: modelIds, keys, roles, useRoles = true } = opts;
   const grounding = opts.grounding === true;
-  const basePrompt = SYSTEM_PROMPTS[mode];
+  const basePrompt = opts.system ?? SYSTEM_PROMPTS[mode];
 
   // Despacha apenas modelos activos e pedidos. Os desactivados ficam de fora.
   const activeModels = MODELS.filter(

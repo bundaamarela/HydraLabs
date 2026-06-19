@@ -20,6 +20,7 @@ interface SessionDetail extends SessionItem {
   synthesis: string | null;
   notes: string | null;
   responses: { model: string; content: string }[];
+  crossExams?: { sourceModel: string; targetModel: string; action: string; content: string }[];
   tags: { name: string }[];
 }
 
@@ -142,6 +143,12 @@ function exportMarkdown(session: SessionDetail) {
   if (session.responses.length > 0) {
     lines.push('---', '', '## Respostas', '');
     for (const r of session.responses) lines.push(`### ${r.model}`, '', r.content, '');
+  }
+  if (session.crossExams && session.crossExams.length > 0) {
+    lines.push('---', '', '## Cruzamentos', '');
+    for (const c of session.crossExams) {
+      lines.push(`### ${c.targetModel} ${c.action} → ${c.sourceModel}`, '', c.content, '');
+    }
   }
   if (session.synthesis) lines.push('---', '', '## Síntese', '', session.synthesis, '');
   if (session.notes)     lines.push('---', '', '## Notas',   '', session.notes,     '');

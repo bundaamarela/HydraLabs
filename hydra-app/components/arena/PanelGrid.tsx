@@ -1,8 +1,10 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { ACTIVE_MODELS, type ModelId } from '@/lib/models';
-import { Panel, type PanelStatus } from './Panel';
+import { ACTIVE_MODELS, type CrossAction, type ModelId } from '@/lib/models';
+import { Panel, type PanelStatus, type CrossExamTurn } from './Panel';
+
+export type { CrossExamTurn };
 
 export interface ModelState {
   status: PanelStatus;
@@ -11,6 +13,8 @@ export interface ModelState {
   sources?: { url: string; title?: string }[];
   /** Modelo não suporta a modalidade do anexo: respondeu só ao texto. */
   unsupported?: boolean;
+  /** Turnos de cruzamento recebidos por este modelo (críticas a outros). */
+  crossExams?: CrossExamTurn[];
   error?: string;
 }
 
@@ -18,12 +22,13 @@ interface PanelGridProps {
   states: Partial<Record<ModelId, ModelState>>;
   density: 2 | 3 | 6;
   grounding?: boolean;
+  onCrossExam?: (sourceModel: ModelId, sourceAnswer: string, targetModel: ModelId, action: CrossAction) => void;
 }
 
 const STAGGER = 0.04; // 40ms between panels
 const DEFAULT_STATE: ModelState = { status: 'idle', content: '' };
 
-export function PanelGrid({ states, density, grounding }: PanelGridProps) {
+export function PanelGrid({ states, density, grounding, onCrossExam }: PanelGridProps) {
   // 6 modelos activos: densidade 3 → grelha 3×2.
   const cols = Math.min(density, 6);
 
@@ -52,8 +57,14 @@ export function PanelGrid({ states, density, grounding }: PanelGridProps) {
                 reasoning={state.reasoning}
                 sources={state.sources}
                 unsupported={state.unsupported}
+                crossExams={state.crossExams}
                 grounding={grounding}
                 error={state.error}
+                onCrossExam={
+                  onCrossExam
+                    ? (target, action) => onCrossExam(model.id, state.content, target, action)
+                    : undefined
+                }
               />
             </motion.div>
           );

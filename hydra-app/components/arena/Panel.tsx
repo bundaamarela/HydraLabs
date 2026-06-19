@@ -1,9 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import type { ModelConfig } from '@/lib/models';
+import { useEffect, useState, type CSSProperties } from 'react';
+import {
+  ACTIVE_MODELS, CROSS_ACTIONS, crossExamTag, getModelById,
+  type ModelConfig, type ModelId, type CrossAction,
+} from '@/lib/models';
 
 export type PanelStatus = 'idle' | 'processing' | 'streaming' | 'done' | 'error';
+
+/** Turno de cruzamento (crítica de outro modelo) exibido dentro deste painel. */
+export interface CrossExamTurn {
+  id: string;
+  sourceModel: ModelId;
+  action: CrossAction;
+  status: PanelStatus;
+  content: string;
+  reasoning?: string;
+  error?: string;
+}
 
 interface PanelProps {
   model: ModelConfig;
@@ -12,8 +26,11 @@ interface PanelProps {
   reasoning?: string;
   sources?: { url: string; title?: string }[];
   unsupported?: boolean;
+  crossExams?: CrossExamTurn[];
   grounding?: boolean;
   error?: string;
+  /** Dispara um cruzamento: envia a resposta deste painel a outro modelo. */
+  onCrossExam?: (targetModel: ModelId, action: CrossAction) => void;
 }
 
 // Default global de mostrar/ocultar raciocínio (hydra_prefs.showReasoning).
@@ -107,7 +124,85 @@ function StatusBadge({ status }: { status: PanelStatus }) {
   );
 }
 
-export function Panel({ model, status, content, reasoning, sources, unsupported, grounding, error }: PanelProps) {
+function CrossStatusLabel({ status }: { status: PanelStatus }) {
+  const map: Partial<Record<PanelStatus, { label: string; color: string }>> = {
+    processing: { label: 'A PENSAR',   color: 'var(--fg-faint)' },
+    streaming:  { label: 'A ESCREVER', color: 'var(--fg-muted)' },
+    error:      { label: 'ERRO',       color: 'var(--err)'      },
+  };
+  const e = map[status];
+  if (!e) return null;
+  return <span style={{ fontSize: 8.5, letterSpacing: '0.4px', color: e.color }}>{e.label}</span>;
+}
+
+// Turno de cruzamento renderizado dentro do painel do modelo-alvo.
+function CrossExamTurnView({ turn }: { turn: CrossExamTurn }) {
+  const [showR, setShowR] = useState(false);
+  const sourceName = getModelById(turn.sourceModel)?.name ?? turn.sourceModel;
+  return (
+    <div style={{ borderTop: '0.5px solid var(--border)', padding: '9px 12px', flexShrink: 0, background: 'var(--surface-2)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: turn.content || turn.reasoning ? 6 : 0 }}>
+        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase', color: 'var(--cream)', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ color: 'var(--fg-muted)' }}>⇄</span>
+          {crossExamTag(turn.action, sourceName)}
+        </span>
+        <CrossStatusLabel status={turn.status} />
+      </div>
+
+      {turn.reasoning && (
+        <div style={{ marginBottom: 6 }}>
+          <button
+            onClick={() => setShowR((v) => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', fontSize: 9.5, fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase', padding: 0 }}
+          >
+            <span style={{ display: 'flex', transform: showR ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>
+              <IconChevron />
+            </span>
+            Raciocínio
+          </button>
+          {showR && (
+            <div style={{ marginTop: 4, fontSize: 11, color: 'var(--fg-muted)', lineHeight: 1.55, whiteSpace: 'pre-wrap', maxHeight: 180, overflowY: 'auto' }}>
+              {turn.reasoning}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ fontSize: 12, color: 'var(--cream)', lineHeight: 1.6 }}>
+        {turn.status === 'processing' && !turn.content && <ProcessingDots />}
+        {turn.content && (
+          <>
+            <SimpleMarkdown text={turn.content} />
+            {turn.status === 'streaming' && (
+              <span style={{ display: 'inline-block', width: 2, height: 12, background: 'var(--cream)', marginLeft: 1, verticalAlign: 'text-bottom', animation: 'blink 0.8s step-end infinite' }} />
+            )}
+          </>
+        )}
+        {turn.status === 'error' && (
+          <span style={{ color: 'var(--err)', fontSize: 11.5 }}>{turn.error || 'Erro no cruzamento.'}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function Panel({ model, status, content, reasoning, sources, unsupported, crossExams, grounding, error, onCrossExam }: PanelProps) {
+  const [crossOpen, setCrossOpen] = useState(false);
+  const [crossTarget, setCrossTarget] = useState<ModelId | null>(null);
+  const crossTargets = ACTIVE_MODELS.filter((m) => m.id !== model.id);
+
+  const fireCross = (target: ModelId, action: CrossAction) => {
+    onCrossExam?.(target, action);
+    setCrossOpen(false);
+    setCrossTarget(null);
+  };
+
+  const crossPill: CSSProperties = {
+    fontSize: 11, fontWeight: 500, padding: '4px 9px', borderRadius: 5,
+    background: 'var(--surface-2)', color: 'var(--cream)',
+    border: '0.5px solid var(--border)', cursor: 'pointer',
+    transition: 'background 0.1s',
+  };
   const wordCount = content ? content.trim().split(/\s+/).filter(Boolean).length : 0;
   const [showReasoning, setShowReasoning] = useState(false);
   useEffect(() => { setShowReasoning(readShowReasoningDefault()); }, []);
@@ -289,6 +384,63 @@ export function Panel({ model, status, content, reasoning, sources, unsupported,
         </div>
       )}
 
+      {/* cross-exam turns — críticas recebidas de outros modelos */}
+      {crossExams?.map((t) => <CrossExamTurnView key={t.id} turn={t} />)}
+
+      {/* cross-exam picker (alvo → acção) */}
+      {crossOpen && onCrossExam && (
+        <div style={{ borderTop: '0.5px solid var(--border)', padding: '9px 12px', flexShrink: 0, background: 'var(--surface-3)' }}>
+          {!crossTarget ? (
+            <>
+              <div style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase', color: 'var(--fg-muted)', marginBottom: 7 }}>
+                Cruzar com
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                {crossTargets.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => setCrossTarget(m.id)}
+                    style={crossPill}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+                  >
+                    {m.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 7 }}>
+                <button
+                  onClick={() => setCrossTarget(null)}
+                  title="Voltar"
+                  style={{ fontSize: 12, lineHeight: 1, color: 'var(--fg-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  ←
+                </button>
+                <span style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase', color: 'var(--fg-muted)' }}>
+                  {getModelById(crossTarget)?.name ?? crossTarget}
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                {CROSS_ACTIONS.map((a) => (
+                  <button
+                    key={a.id}
+                    onClick={() => fireCross(crossTarget, a.id)}
+                    style={crossPill}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+                  >
+                    {a.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {/* footer */}
       {status === 'done' && (
         <div style={{
@@ -300,19 +452,37 @@ export function Panel({ model, status, content, reasoning, sources, unsupported,
           <span style={{ fontSize: 10, color: 'var(--fg-faint)' }}>
             {wordCount} palavras
           </span>
-          <button
-            onClick={() => navigator.clipboard.writeText(content)}
-            style={{
-              fontSize: 10, color: 'var(--fg-muted)',
-              background: 'none', border: 'none',
-              cursor: 'pointer', padding: '2px 6px', borderRadius: 3,
-              transition: 'color 0.1s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = 'var(--cream)'}
-            onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = 'var(--fg-muted)'}
-          >
-            Copiar
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            {onCrossExam && (
+              <button
+                onClick={() => { setCrossOpen((v) => !v); setCrossTarget(null); }}
+                title="Cruzar: enviar esta resposta a outro modelo"
+                style={{
+                  fontSize: 10, color: crossOpen ? 'var(--cream)' : 'var(--fg-muted)',
+                  background: 'none', border: 'none',
+                  cursor: 'pointer', padding: '2px 6px', borderRadius: 3,
+                  transition: 'color 0.1s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = 'var(--cream)'}
+                onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = crossOpen ? 'var(--cream)' : 'var(--fg-muted)'}
+              >
+                ⇄ Cruzar
+              </button>
+            )}
+            <button
+              onClick={() => navigator.clipboard.writeText(content)}
+              style={{
+                fontSize: 10, color: 'var(--fg-muted)',
+                background: 'none', border: 'none',
+                cursor: 'pointer', padding: '2px 6px', borderRadius: 3,
+                transition: 'color 0.1s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = 'var(--cream)'}
+              onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = 'var(--fg-muted)'}
+            >
+              Copiar
+            </button>
+          </div>
         </div>
       )}
     </div>

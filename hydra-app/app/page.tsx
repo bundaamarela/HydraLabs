@@ -2,10 +2,10 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { useApp } from './providers';
-import { ACTIVE_MODELS, MODELS, type ModelId, type ModeId } from '@/lib/models';
+import { ACTIVE_MODELS, MODELS, type CrossAction, type ModelId, type ModeId } from '@/lib/models';
 import { Topbar } from '@/components/arena/Topbar';
 import { QueryBubble } from '@/components/arena/QueryBubble';
-import { PanelGrid, type ModelState } from '@/components/arena/PanelGrid';
+import { PanelGrid, type ModelState, type CrossExamTurn } from '@/components/arena/PanelGrid';
 import { ModeSelector } from '@/components/arena/ModeSelector';
 import { InputBar } from '@/components/arena/InputBar';
 import { SynthesisPanel } from '@/components/arena/SynthesisPanel';
@@ -53,7 +53,7 @@ function readUseRoles(): boolean {
 }
 
 export default function ArenaPage() {
-  const { sidebarW, notesW, setActiveSessionId } = useApp();
+  const { sidebarW, notesW, activeSessionId, setActiveSessionId } = useApp();
 
   const [query, setQuery]         = useState('');
   const [mode, setMode]           = useState<ModeId>('raciocinio');
@@ -320,6 +320,72 @@ export default function ArenaPage() {
     if (m === 'consolidacao') setGrounding(true);
   }, []);
 
+  // ── cross-examination ──────────────────────────────────────────────────────
+  // Envia a resposta de um painel concluído a outro modelo para crítica/refutação/
+  // melhoria; o resultado renderiza dentro do painel do modelo-alvo, em streaming.
+  const handleCrossExam = useCallback(async (
+    sourceModel: ModelId,
+    sourceAnswer: string,
+    targetModel: ModelId,
+    action: CrossAction,
+  ) => {
+    if (!sourceAnswer?.trim()) return;
+    const id = `cx_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+    setPanelStates((prev) => {
+      const panel = prev[targetModel] ?? { status: 'idle' as PanelStatus, content: '' };
+      const turn: CrossExamTurn = { id, sourceModel, action, status: 'processing', content: '' };
+      return { ...prev, [targetModel]: { ...panel, crossExams: [...(panel.crossExams ?? []), turn] } };
+    });
+
+    const patchTurn = (patch: Partial<CrossExamTurn>) => {
+      setPanelStates((prev) => {
+        const panel = prev[targetModel];
+        if (!panel) return prev;
+        const crossExams = (panel.crossExams ?? []).map((t) => (t.id === id ? { ...t, ...patch } : t));
+        return { ...prev, [targetModel]: { ...panel, crossExams } };
+      });
+    };
+
+    let finalContent = '';
+    let finalReasoning = '';
+    try {
+      const resp = await fetch('/api/crossexam', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceModel, sourceAnswer, targetModel, action, originalQuery: query, keys: readApiKeys() }),
+      });
+      if (!resp.ok || !resp.body) throw new Error('crossexam request failed');
+
+      await readSSE(
+        resp.body,
+        (_mid, token, kind) => {
+          if (kind === 'reasoning') { finalReasoning += token; patchTurn({ status: 'streaming', reasoning: finalReasoning }); }
+          else                      { finalContent  += token; patchTurn({ status: 'streaming', content: finalContent }); }
+        },
+        () => patchTurn({ status: 'done' }),
+        (_mid, err) => patchTurn({ status: 'error', error: err }),
+        () => {},
+      );
+
+      patchTurn({ status: 'done', content: finalContent, reasoning: finalReasoning || undefined });
+
+      // Persiste o turno na sessão activa (ids de origem e alvo guardados).
+      if (activeSessionId && finalContent.trim()) {
+        try {
+          await fetch(`/api/sessions/${activeSessionId}/crossexam`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sourceModel, targetModel, action, content: finalContent, reasoning: finalReasoning || undefined }),
+          });
+        } catch { /* não-fatal */ }
+      }
+    } catch (err) {
+      patchTurn({ status: 'error', error: err instanceof Error ? err.message : 'erro no cruzamento' });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, activeSessionId]);
+
   const isRunning = phase === 'running' || phase === 'synthesis';
 
   return (
@@ -345,7 +411,7 @@ export default function ArenaPage() {
         <QueryBubble query={query} attachment={submittedAttachment} />
 
         {query && (
-          <PanelGrid states={panelStates} density={density} grounding={grounding} />
+          <PanelGrid states={panelStates} density={density} grounding={grounding} onCrossExam={handleCrossExam} />
         )}
 
         {(synthesisStatus !== 'idle') && (
