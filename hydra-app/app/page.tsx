@@ -60,6 +60,8 @@ export default function ArenaPage() {
   const [density, setDensity]     = useState<2 | 3 | 6>(3);
   const [grounding, setGrounding] = useState(false);
   const [submittedAttachment, setSubmittedAttachment] = useState<Attachment | null>(null);
+  const [selectedModels, setSelectedModels] = useState<ModelId[]>(ACTIVE_MODELS.map((m) => m.id));
+  const [roundModels, setRoundModels] = useState<ModelId[]>(ACTIVE_MODELS.map((m) => m.id));
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
   const [panelStates, setPanelStates] = useState<Partial<Record<ModelId, ModelState>>>(INITIAL_STATES());
   const [phase, setPhase]         = useState<ArenaPhase>('idle');
@@ -201,8 +203,9 @@ export default function ArenaPage() {
     setSubmittedAttachment(attachment ?? null);
     setPhase('running');
 
-    // Mark all active models as processing
-    const activeIds = ACTIVE_MODELS.map((m) => m.id);
+    // Modelos desta ronda = selecção do utilizador (mínimo 1; fallback todos).
+    const activeIds = selectedModels.length ? selectedModels : ACTIVE_MODELS.map((m) => m.id);
+    setRoundModels(activeIds);
     setPanelStates((prev) => {
       const next = { ...prev };
       for (const id of activeIds) next[id] = { status: 'processing', content: '' };
@@ -311,13 +314,24 @@ export default function ArenaPage() {
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, mode, updatePanel, setActiveSessionId]);
+  }, [phase, mode, grounding, selectedModels, updatePanel, setActiveSessionId]);
 
   // Selecção de modo. Consolidação combina com pesquisa web — sugere (não força)
   // grounding ON; o utilizador pode desligar a seguir.
   const handleModeSelect = useCallback((m: ModeId) => {
     setMode(m);
     if (m === 'consolidacao') setGrounding(true);
+  }, []);
+
+  // Selecção por consulta: liga/desliga um modelo, mantendo a ordem e ≥ 1 activo.
+  const handleToggleModel = useCallback((id: ModelId) => {
+    setSelectedModels((prev) => {
+      if (prev.includes(id)) {
+        const next = prev.filter((x) => x !== id);
+        return next.length === 0 ? prev : next;
+      }
+      return ACTIVE_MODELS.map((m) => m.id).filter((mid) => mid === id || prev.includes(mid));
+    });
   }, []);
 
   // ── cross-examination ──────────────────────────────────────────────────────
@@ -386,6 +400,45 @@ export default function ArenaPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, activeSessionId]);
 
+  // ── single-panel regenerate ────────────────────────────────────────────────
+  // Re-dispara APENAS este modelo com a mesma pergunta/modo/papéis/grounding/anexo,
+  // substituindo o conteúdo desse painel sem tocar nos restantes.
+  const handleRegenerate = useCallback(async (modelId: ModelId) => {
+    if (!query) return;
+    updatePanel(modelId, {
+      status: 'processing', content: '',
+      reasoning: undefined, sources: undefined, error: undefined,
+      unsupported: undefined, crossExams: undefined,
+    });
+
+    let content = '';
+    let reasoning = '';
+    try {
+      const resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, mode, models: [modelId], keys: readApiKeys(), roles: readRoles(), useRoles: readUseRoles(), grounding, attachment: submittedAttachment ?? undefined }),
+      });
+      if (!resp.ok || !resp.body) throw new Error('regen request failed');
+
+      await readSSE(
+        resp.body,
+        (mid, token, kind) => {
+          if (kind === 'reasoning') { reasoning += token; updatePanel(mid, { status: 'streaming', reasoning }); }
+          else                      { content  += token; updatePanel(mid, { status: 'streaming', content }); }
+        },
+        (mid) => updatePanel(mid, { status: 'done', content }),
+        (mid, err) => updatePanel(mid, { status: 'error', error: err }),
+        () => {},
+        (mid, srcs) => updatePanel(mid, { sources: srcs }),
+        (mid) => updatePanel(mid, { unsupported: true }),
+      );
+    } catch (err) {
+      updatePanel(modelId, { status: 'error', error: err instanceof Error ? err.message : 'erro ao regenerar' });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, mode, grounding, submittedAttachment, updatePanel]);
+
   const isRunning = phase === 'running' || phase === 'synthesis';
 
   return (
@@ -411,7 +464,14 @@ export default function ArenaPage() {
         <QueryBubble query={query} attachment={submittedAttachment} />
 
         {query && (
-          <PanelGrid states={panelStates} density={density} grounding={grounding} onCrossExam={handleCrossExam} />
+          <PanelGrid
+            states={panelStates}
+            models={roundModels}
+            density={density}
+            grounding={grounding}
+            onCrossExam={handleCrossExam}
+            onRegenerate={handleRegenerate}
+          />
         )}
 
         {(synthesisStatus !== 'idle') && (
@@ -447,6 +507,8 @@ export default function ArenaPage() {
         disabled={isRunning}
         grounding={grounding}
         onGrounding={setGrounding}
+        selectedModels={selectedModels}
+        onToggleModel={handleToggleModel}
       />
     </div>
   );

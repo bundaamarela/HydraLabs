@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { ACTIVE_MODELS, type CrossAction, type ModelId } from '@/lib/models';
+import { getModelById, type CrossAction, type ModelId } from '@/lib/models';
 import { Panel, type PanelStatus, type CrossExamTurn } from './Panel';
 
 export type { CrossExamTurn };
@@ -20,17 +20,21 @@ export interface ModelState {
 
 interface PanelGridProps {
   states: Partial<Record<ModelId, ModelState>>;
+  /** Modelos a renderizar nesta ronda, por ordem (selecção por consulta). */
+  models: ModelId[];
   density: 2 | 3 | 6;
   grounding?: boolean;
   onCrossExam?: (sourceModel: ModelId, sourceAnswer: string, targetModel: ModelId, action: CrossAction) => void;
+  onRegenerate?: (modelId: ModelId) => void;
 }
 
 const STAGGER = 0.04; // 40ms between panels
 const DEFAULT_STATE: ModelState = { status: 'idle', content: '' };
 
-export function PanelGrid({ states, density, grounding, onCrossExam }: PanelGridProps) {
-  // 6 modelos activos: densidade 3 → grelha 3×2.
-  const cols = Math.min(density, 6);
+export function PanelGrid({ states, models, density, grounding, onCrossExam, onRegenerate }: PanelGridProps) {
+  const configs = models.map((id) => getModelById(id)).filter((m): m is NonNullable<typeof m> => !!m);
+  // Grelha sã para 1–6: nunca mais colunas do que painéis.
+  const cols = Math.min(density, Math.max(configs.length, 1));
 
   return (
     <div style={{
@@ -40,7 +44,7 @@ export function PanelGrid({ states, density, grounding, onCrossExam }: PanelGrid
       padding: '12px 16px',
     }}>
       <AnimatePresence>
-        {ACTIVE_MODELS.map((model, index) => {
+        {configs.map((model, index) => {
           const state = states[model.id] ?? DEFAULT_STATE;
           return (
             <motion.div
@@ -58,6 +62,7 @@ export function PanelGrid({ states, density, grounding, onCrossExam }: PanelGrid
                 sources={state.sources}
                 unsupported={state.unsupported}
                 crossExams={state.crossExams}
+                crossTargetIds={models}
                 grounding={grounding}
                 error={state.error}
                 onCrossExam={
@@ -65,6 +70,7 @@ export function PanelGrid({ states, density, grounding, onCrossExam }: PanelGrid
                     ? (target, action) => onCrossExam(model.id, state.content, target, action)
                     : undefined
                 }
+                onRegenerate={onRegenerate ? () => onRegenerate(model.id) : undefined}
               />
             </motion.div>
           );

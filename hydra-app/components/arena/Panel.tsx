@@ -27,10 +27,14 @@ interface PanelProps {
   sources?: { url: string; title?: string }[];
   unsupported?: boolean;
   crossExams?: CrossExamTurn[];
+  /** Modelos-alvo possíveis para cruzamento (os do round); default: todos activos. */
+  crossTargetIds?: ModelId[];
   grounding?: boolean;
   error?: string;
   /** Dispara um cruzamento: envia a resposta deste painel a outro modelo. */
   onCrossExam?: (targetModel: ModelId, action: CrossAction) => void;
+  /** Re-dispara apenas este modelo com a mesma pergunta/modo/papéis/grounding. */
+  onRegenerate?: () => void;
 }
 
 // Default global de mostrar/ocultar raciocínio (hydra_prefs.showReasoning).
@@ -186,10 +190,14 @@ function CrossExamTurnView({ turn }: { turn: CrossExamTurn }) {
   );
 }
 
-export function Panel({ model, status, content, reasoning, sources, unsupported, crossExams, grounding, error, onCrossExam }: PanelProps) {
+export function Panel({ model, status, content, reasoning, sources, unsupported, crossExams, crossTargetIds, grounding, error, onCrossExam, onRegenerate }: PanelProps) {
   const [crossOpen, setCrossOpen] = useState(false);
   const [crossTarget, setCrossTarget] = useState<ModelId | null>(null);
-  const crossTargets = ACTIVE_MODELS.filter((m) => m.id !== model.id);
+  const crossTargets = (
+    crossTargetIds
+      ? crossTargetIds.map((id) => getModelById(id)).filter((m): m is ModelConfig => !!m)
+      : ACTIVE_MODELS
+  ).filter((m) => m.id !== model.id);
 
   const fireCross = (target: ModelId, action: CrossAction) => {
     onCrossExam?.(target, action);
@@ -202,6 +210,13 @@ export function Panel({ model, status, content, reasoning, sources, unsupported,
     background: 'var(--surface-2)', color: 'var(--cream)',
     border: '0.5px solid var(--border)', cursor: 'pointer',
     transition: 'background 0.1s',
+  };
+
+  const actionBtn: CSSProperties = {
+    fontSize: 10, color: 'var(--fg-muted)',
+    background: 'none', border: 'none',
+    cursor: 'pointer', padding: '2px 6px', borderRadius: 3,
+    transition: 'color 0.1s',
   };
   const wordCount = content ? content.trim().split(/\s+/).filter(Boolean).length : 0;
   const [showReasoning, setShowReasoning] = useState(false);
@@ -441,8 +456,8 @@ export function Panel({ model, status, content, reasoning, sources, unsupported,
         </div>
       )}
 
-      {/* footer */}
-      {status === 'done' && (
+      {/* footer / acções */}
+      {(status === 'done' || status === 'error') && (
         <div style={{
           padding: '7px 12px',
           borderTop: '0.5px solid var(--border)',
@@ -450,38 +465,41 @@ export function Panel({ model, status, content, reasoning, sources, unsupported,
           flexShrink: 0,
         }}>
           <span style={{ fontSize: 10, color: 'var(--fg-faint)' }}>
-            {wordCount} palavras
+            {status === 'done' ? `${wordCount} palavras` : 'Falhou'}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {onCrossExam && (
+            {onRegenerate && (
+              <button
+                onClick={onRegenerate}
+                title="Regenerar apenas este painel"
+                style={actionBtn}
+                onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = 'var(--cream)'}
+                onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = 'var(--fg-muted)'}
+              >
+                ↻ Regenerar
+              </button>
+            )}
+            {status === 'done' && onCrossExam && (
               <button
                 onClick={() => { setCrossOpen((v) => !v); setCrossTarget(null); }}
                 title="Cruzar: enviar esta resposta a outro modelo"
-                style={{
-                  fontSize: 10, color: crossOpen ? 'var(--cream)' : 'var(--fg-muted)',
-                  background: 'none', border: 'none',
-                  cursor: 'pointer', padding: '2px 6px', borderRadius: 3,
-                  transition: 'color 0.1s',
-                }}
+                style={{ ...actionBtn, color: crossOpen ? 'var(--cream)' : 'var(--fg-muted)' }}
                 onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = 'var(--cream)'}
                 onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = crossOpen ? 'var(--cream)' : 'var(--fg-muted)'}
               >
                 ⇄ Cruzar
               </button>
             )}
-            <button
-              onClick={() => navigator.clipboard.writeText(content)}
-              style={{
-                fontSize: 10, color: 'var(--fg-muted)',
-                background: 'none', border: 'none',
-                cursor: 'pointer', padding: '2px 6px', borderRadius: 3,
-                transition: 'color 0.1s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = 'var(--cream)'}
-              onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = 'var(--fg-muted)'}
-            >
-              Copiar
-            </button>
+            {status === 'done' && (
+              <button
+                onClick={() => navigator.clipboard.writeText(content)}
+                style={actionBtn}
+                onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = 'var(--cream)'}
+                onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = 'var(--fg-muted)'}
+              >
+                Copiar
+              </button>
+            )}
           </div>
         </div>
       )}

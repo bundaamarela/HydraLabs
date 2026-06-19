@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useApp } from '@/app/providers';
-import { type ModeId, MODE_LABELS } from '@/lib/models';
+import { ACTIVE_MODELS, type ModeId, type ModelId, MODE_LABELS } from '@/lib/models';
 import type { Attachment } from '@/lib/orchestrator';
 
 const QUICK_MODES: ModeId[] = ['rapido', 'raciocinio', 'pesquisa', 'investigacao'];
@@ -22,9 +22,11 @@ interface InputBarProps {
   disabled: boolean;
   grounding: boolean;
   onGrounding: (v: boolean) => void;
+  selectedModels: ModelId[];
+  onToggleModel: (id: ModelId) => void;
 }
 
-export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, onGrounding }: InputBarProps) {
+export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, onGrounding, selectedModels, onToggleModel }: InputBarProps) {
   const { sidebarW, notesW } = useApp();
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -84,6 +86,33 @@ export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, on
       transition: 'left 0.2s ease, right 0.2s ease',
       padding: '0 16px 16px',
     }}>
+      {/* model multi-select — quais modelos disparam nesta query */}
+      <div style={{ display: 'flex', gap: 5, marginBottom: 7, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+        {ACTIVE_MODELS.map((m) => {
+          const on = selectedModels.includes(m.id);
+          return (
+            <button
+              key={m.id}
+              onClick={() => onToggleModel(m.id)}
+              title={on ? `${m.name}: incluído nesta consulta` : `${m.name}: excluído`}
+              style={{
+                fontSize: 9.5, fontWeight: 600, letterSpacing: '0.3px',
+                padding: '3px 8px', borderRadius: 4,
+                display: 'flex', alignItems: 'center', gap: 5,
+                background: on ? 'var(--surface-3)' : 'transparent',
+                color: on ? 'var(--cream)' : 'var(--fg-faint)',
+                border: '0.5px solid var(--border)',
+                cursor: 'pointer', opacity: on ? 1 : 0.55,
+                transition: 'opacity 0.1s, background 0.1s, color 0.1s',
+              }}
+            >
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: on ? 'var(--cream)' : 'var(--fg-faint)' }} />
+              {m.name}
+            </button>
+          );
+        })}
+      </div>
+
       {/* mode chips */}
       <div style={{ display: 'flex', gap: 5, marginBottom: 8, justifyContent: 'center', alignItems: 'center' }}>
         {QUICK_MODES.map((m) => (
