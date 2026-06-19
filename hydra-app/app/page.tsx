@@ -313,6 +313,13 @@ export default function ArenaPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, mode, updatePanel, setActiveSessionId]);
 
+  // Selecção de modo. Consolidação combina com pesquisa web — sugere (não força)
+  // grounding ON; o utilizador pode desligar a seguir.
+  const handleModeSelect = useCallback((m: ModeId) => {
+    setMode(m);
+    if (m === 'consolidacao') setGrounding(true);
+  }, []);
+
   const isRunning = phase === 'running' || phase === 'synthesis';
 
   return (
@@ -330,7 +337,7 @@ export default function ArenaPage() {
         open={modeSelectorOpen}
         onClose={() => setModeSelectorOpen(false)}
         mode={mode}
-        onSelect={setMode}
+        onSelect={handleModeSelect}
       />
 
       {/* scroll area — padded for InputBar */}
@@ -369,7 +376,7 @@ export default function ArenaPage() {
 
       <InputBar
         mode={mode}
-        onModeSelect={setMode}
+        onModeSelect={handleModeSelect}
         onSubmit={handleSubmit}
         disabled={isRunning}
         grounding={grounding}

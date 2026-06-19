@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { orchestrate, type Attachment, type StreamToken } from '@/lib/orchestrator';
-import type { ApiKeys, ModelId, ModeId } from '@/lib/models';
+import { MODE_IDS, type ApiKeys, type ModelId, type ModeId } from '@/lib/models';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   if (!query || typeof query !== 'string' || query.trim().length === 0) {
     return new Response('query is required', { status: 400 });
   }
-  if (!mode || !['rapido', 'raciocinio', 'pesquisa', 'investigacao', 'sintese'].includes(mode)) {
+  if (!mode || !MODE_IDS.includes(mode)) {
     return new Response('invalid mode', { status: 400 });
   }
   if (!Array.isArray(models) || models.length === 0) {

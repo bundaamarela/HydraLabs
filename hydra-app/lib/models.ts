@@ -16,7 +16,14 @@ export type ModelId =
   | 'zai'
   | 'manus';
 
-export type ModeId = 'rapido' | 'raciocinio' | 'pesquisa' | 'investigacao' | 'sintese';
+export type ModeId =
+  | 'rapido'
+  | 'raciocinio'
+  | 'pesquisa'
+  | 'investigacao'
+  | 'sintese'
+  | 'direto'
+  | 'consolidacao';
 
 /**
  * Chaves API por pedido — lidas no cliente do localStorage `hydra_api_keys`
@@ -190,6 +197,23 @@ export const SYSTEM_PROMPTS: Record<ModeId, string> = {
     'Analisa em profundidade. Identifica pressupostos, contradições, lacunas e perspectivas alternativas. Não simplifiques.',
   sintese:
     'És um sintetizador preciso de respostas de múltiplas IAs. A tua única função é sintetizar com rigor.',
+  direto:
+    'Responde de forma directa e final. Apenas a resposta — sem preâmbulo, sem justificação, sem ressalvas. Conciso e decidido.',
+  consolidacao:
+    'O utilizador traz uma ideia. A tua função é consolidá-la e torná-la sólida. Gera novas direcções, extensões e aplicações da ideia (criatividade) e fundamenta cada uma com o máximo de dados, evidências, mecanismos, precedentes históricos, analogias e enquadramentos teóricos (dados massivos). Antecipa objecções e refuta-as. Densidade máxima, exaustivo e estruturado. Não resumas — expande e fundamenta.',
+};
+
+/** IDs de modo válidos (derivados dos prompts) — usado na validação da API. */
+export const MODE_IDS = Object.keys(SYSTEM_PROMPTS) as ModeId[];
+
+/**
+ * Tecto de tokens por modo, quando definido. 'direto' fica enxuto e barato;
+ * 'consolidacao' usa um tecto alto para respostas densas e exaustivas. Modos
+ * sem entrada usam o default do SDK (sem tecto explícito).
+ */
+export const MODE_MAX_TOKENS: Partial<Record<ModeId, number>> = {
+  direto: 1024,
+  consolidacao: 8000,
 };
 
 export const MODE_LABELS: Record<ModeId, string> = {
@@ -198,6 +222,8 @@ export const MODE_LABELS: Record<ModeId, string> = {
   pesquisa:     '/Pesquisa',
   investigacao: '/Investigação',
   sintese:      '/Síntese',
+  direto:       '/Directo',
+  consolidacao: '/Consolidação',
 };
 
 export const MODE_DESCRIPTIONS: Record<ModeId, { desc: string; hint: string }> = {
@@ -206,4 +232,6 @@ export const MODE_DESCRIPTIONS: Record<ModeId, { desc: string; hint: string }> =
   pesquisa:     { desc: 'Grounding factual. Fontes priorizadas.',       hint: 'web · papers'  },
   investigacao: { desc: 'Análise profunda. Pressupostos mapeados.',     hint: 'profundo'      },
   sintese:      { desc: 'Síntese automática das 6 vozes.',              hint: 'interno'       },
+  direto:       { desc: 'Resposta final, sem rodeios.',                 hint: 'directo'       },
+  consolidacao: { desc: 'Criatividade + dados massivos para solidificar uma ideia.', hint: 'denso · web' },
 };

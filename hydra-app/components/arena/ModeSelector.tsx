@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { ModeId, MODE_LABELS, MODE_DESCRIPTIONS } from '@/lib/models';
 
-const SELECTABLE: ModeId[] = ['rapido', 'raciocinio', 'pesquisa', 'investigacao'];
+const SELECTABLE: ModeId[] = ['rapido', 'raciocinio', 'pesquisa', 'investigacao', 'direto', 'consolidacao'];
 
 interface ModeSelectorProps {
   open: boolean;

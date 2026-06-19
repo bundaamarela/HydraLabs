@@ -1,5 +1,5 @@
 import { streamText, type JSONValue } from 'ai';
-import { MODELS, MODALITIES, SYSTEM_PROMPTS, type ApiKeys, type ModelId, type ModeId } from './models';
+import { MODELS, MODALITIES, MODE_MAX_TOKENS, SYSTEM_PROMPTS, type ApiKeys, type ModelId, type ModeId } from './models';
 
 export interface SourceRef {
   url: string;
@@ -126,8 +126,12 @@ function thinkingOptions(id: ModelId): Record<string, Record<string, JSONValue>>
 function buildProviderOptions(
   id: ModelId,
   grounding: boolean,
+  mode: ModeId,
 ): Record<string, Record<string, JSONValue>> | undefined {
-  const po: Record<string, Record<string, JSONValue>> = { ...(thinkingOptions(id) ?? {}) };
+  // 'direto' mantém-se enxuto e barato: sem thinking (não eleva budgets).
+  const po: Record<string, Record<string, JSONValue>> = {
+    ...(mode === 'direto' ? {} : thinkingOptions(id) ?? {}),
+  };
   if (grounding && id === 'grok') {
     po.xai = {
       search_parameters: {
@@ -171,7 +175,8 @@ export async function orchestrate(
           model: modelConfig.getModel(keys, { grounding }),
           system,
           messages: [{ role: 'user', content }],
-          providerOptions: buildProviderOptions(modelConfig.id, grounding),
+          providerOptions: buildProviderOptions(modelConfig.id, grounding, mode),
+          maxTokens: MODE_MAX_TOKENS[mode],
         });
 
         const sources: SourceRef[] = [];
