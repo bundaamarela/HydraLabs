@@ -30,10 +30,10 @@ export function ModeSelector({ open, onClose, mode, onSelect }: ModeSelectorProp
     <div
       ref={ref}
       style={{
-        position: 'fixed',
-        left: '50%', top: 50,
-        transform: 'translateX(-50%)',
-        width: 290,
+        // ancorado ao botão de modo na banda de cabeçalho (pai relativo)
+        position: 'absolute',
+        top: 'calc(100% + 6px)', left: 0,
+        width: 290, maxWidth: 'calc(100vw - 32px)',
         background: 'var(--surface-2)',
         border: '0.5px solid var(--border)',
         borderRadius: 10,

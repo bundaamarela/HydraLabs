@@ -26,8 +26,9 @@
   --font-ui:   -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   --font-read: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
 
-  --sb-w:  220px;
-  --nt-w:  0px;
+  /* shell — frame geometry (header band + sidebar column) */
+  --header-h:  56px;   /* altura da banda de cabeçalho e do bloco-logo da sidebar */
+  --sidebar-w: 240px;  /* largura expandida por defeito (sobreposta em runtime) */
 }
 
 [data-theme='light'] {
@@ -48,18 +49,22 @@
 
 /* ── base ──────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
-html, body { height: 100%; margin: 0; }
+html, body { height: 100%; margin: 0; padding: 0; }
 body {
   background: var(--surface);
   color: var(--cream);
   font-family: var(--font-ui);
-  font-size: 13px;
+  /* tipo ~10% maior do que a base original (13→14), sem `zoom` — `zoom`
+     reescalava o 100dvh do shell para 110% da viewport (overflow vertical +
+     clipping horizontal), incompatível com um shell fixo de viewport inteira. */
+  font-size: 14px;
   line-height: 1.5;
-  zoom: 1.1; /* letras ~10% maiores (escala global uniforme) */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   letter-spacing: -0.1px;
-  overflow-x: hidden;
+  /* O grid-root (100dvh, overflow:hidden) é o contentor fixo; só a região de
+     conteúdo de cada página faz scroll. O body nunca rola. */
+  overflow: hidden;
 }
 
 /* superfícies de leitura usam o tipo de leitura; código mantém-se monoespaçado */
@@ -67,8 +72,8 @@ body {
 .read pre, .read code { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
 
 /* presets de densidade (data-density no <html>) — afecta espaçamento do texto */
-[data-density='compacto'] body { font-size: 12px;   line-height: 1.42; }
-[data-density='espacoso'] body { font-size: 14px;   line-height: 1.62; }
+[data-density='compacto'] body { font-size: 13px;   line-height: 1.42; }
+[data-density='espacoso'] body { font-size: 15px;   line-height: 1.62; }
 
 ::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
 button {

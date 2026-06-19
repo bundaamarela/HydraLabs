@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/app/providers';
+import { PageFrame } from '@/components/layout/PageFrame';
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -371,6 +372,7 @@ function ProjectSidebar({
       width: 180, flexShrink: 0,
       borderRight: '0.5px solid var(--border)',
       paddingTop: 4,
+      height: '100%', overflowY: 'auto',
     }}>
       <div style={{
         fontSize: 9, fontWeight: 500,
@@ -671,54 +673,54 @@ export default function LibraryPage() {
   const searchActive = search.trim().length > 0 || modeFilter !== 'todos' || projectFilter !== null;
 
   return (
-    <div style={{
-      minHeight: '100dvh',
-      display: 'flex',
-    }}>
-      {/* ── project sidebar (hidden on mobile to free width) ── */}
-      {!isMobile && (
-        <ProjectSidebar
-          projects={projects}
-          selected={projectFilter}
-          onSelect={setProjectFilter}
-          totalCount={allCount}
-        />
-      )}
-
-      {/* ── main content ── */}
-      <main style={{ flex: 1, padding: isMobile ? '8px 16px 64px' : '32px 32px 64px', minWidth: 0 }}>
-
-        {/* header */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24 }}>
-          <div>
-            <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cream)', letterSpacing: '-0.5px', marginBottom: 3 }}>
-              Biblioteca
-            </h1>
-            <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>
-              {loading ? 'A carregar…' : `${totalCount} ${totalCount === 1 ? 'sessão' : 'sessões'}${searchActive ? ' (filtradas)' : ''}`}
-            </p>
-          </div>
-          <div style={{
-            display: 'flex', background: 'var(--surface-2)',
-            border: '0.5px solid var(--border)', borderRadius: 7, padding: 2, gap: 2,
-          }}>
-            {(['grid', 'list'] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => setViewMode(v)}
-                style={{
-                  padding: '5px 9px', borderRadius: 5, display: 'flex', alignItems: 'center',
-                  background: viewMode === v ? 'var(--surface-3)' : 'transparent',
-                  color:      viewMode === v ? 'var(--cream)' : 'var(--fg-muted)',
-                  transition: 'background 0.12s, color 0.12s',
-                }}
-                title={v === 'grid' ? 'Grelha' : 'Lista'}
-              >
-                {v === 'grid' ? <IconGrid /> : <IconList />}
-              </button>
-            ))}
-          </div>
+    <PageFrame
+      scroll={false}
+      title={
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
+          <h1 style={{ fontSize: 15, fontWeight: 600, color: 'var(--cream)', letterSpacing: '-0.3px', margin: 0 }}>
+            Biblioteca
+          </h1>
+          <span style={{ fontSize: 12, color: 'var(--fg-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {loading ? 'A carregar…' : `${totalCount} ${totalCount === 1 ? 'sessão' : 'sessões'}${searchActive ? ' (filtradas)' : ''}`}
+          </span>
         </div>
+      }
+      actions={
+        <div style={{
+          display: 'flex', background: 'var(--surface-2)',
+          border: '0.5px solid var(--border)', borderRadius: 7, padding: 2, gap: 2,
+        }}>
+          {(['grid', 'list'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setViewMode(v)}
+              style={{
+                padding: '5px 9px', borderRadius: 5, display: 'flex', alignItems: 'center',
+                background: viewMode === v ? 'var(--surface-3)' : 'transparent',
+                color:      viewMode === v ? 'var(--cream)' : 'var(--fg-muted)',
+                transition: 'background 0.12s, color 0.12s',
+              }}
+              title={v === 'grid' ? 'Grelha' : 'Lista'}
+            >
+              {v === 'grid' ? <IconGrid /> : <IconList />}
+            </button>
+          ))}
+        </div>
+      }
+    >
+      <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+        {/* ── project sidebar (hidden on mobile to free width) ── */}
+        {!isMobile && (
+          <ProjectSidebar
+            projects={projects}
+            selected={projectFilter}
+            onSelect={setProjectFilter}
+            totalCount={allCount}
+          />
+        )}
+
+        {/* ── main content (only this column scrolls) ── */}
+        <main style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: isMobile ? '8px 16px 64px' : '24px 32px 64px' }}>
 
         {/* toolbar */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
@@ -819,6 +821,7 @@ export default function LibraryPage() {
         )}
 
       </main>
+      </div>
 
       {/* delete modal */}
       {deleteTarget && (
@@ -828,6 +831,6 @@ export default function LibraryPage() {
           onCancel={() => setDeleteTarget(null)}
         />
       )}
-    </div>
+    </PageFrame>
   );
 }

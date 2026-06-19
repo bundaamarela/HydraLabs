@@ -136,19 +136,17 @@ const NAV = [
 
 const s: Record<string, React.CSSProperties> = {
   sidebar: {
-    position: 'fixed', left: 0, top: 0,
-    height: '100dvh', zIndex: 40,
     background: 'var(--surface-2)',
     borderRight: '0.5px solid var(--border)',
     display: 'flex', flexDirection: 'column',
     overflow: 'hidden',
-    transition: 'width 0.2s ease',
+    height: '100%',
   },
   brand: {
     display: 'flex', alignItems: 'center', gap: 10,
-    padding: '13px 14px',
+    height: 'var(--header-h)', padding: '0 14px',
     borderBottom: '0.5px solid var(--border)',
-    minHeight: 48, cursor: 'pointer',
+    cursor: 'pointer',
     flexShrink: 0, whiteSpace: 'nowrap',
   },
   mark: {
@@ -288,13 +286,21 @@ export function Sidebar() {
     <aside
       style={{
         ...s.sidebar,
-        width: sidebarW,
-        zIndex: isMobile ? 45 : 40,
-        transform: isMobile && !mobileNavOpen ? 'translateX(-100%)' : 'translateX(0)',
-        boxShadow: isMobile && mobileNavOpen ? '0 0 40px rgba(0,0,0,0.5)' : 'none',
-        transition: isMobile
-          ? 'transform 0.2s ease'
-          : (dragging ? 'none' : s.sidebar.transition),
+        ...(isMobile
+          ? {
+              position: 'fixed', left: 0, top: 0,
+              width: sidebarW, height: '100dvh', zIndex: 45,
+              transform: mobileNavOpen ? 'translateX(0)' : 'translateX(-100%)',
+              boxShadow: mobileNavOpen ? '0 0 40px rgba(0,0,0,0.5)' : 'none',
+              transition: 'transform 0.2s ease',
+            }
+          : {
+              // coluna 1 da grelha — em fluxo; a largura do elemento conduz a
+              // pista `auto` e anima a recolha/expansão suavemente.
+              position: 'relative',
+              width: sidebarW, zIndex: 40,
+              transition: dragging ? 'none' : 'width 0.2s ease',
+            }),
       }}
     >
 

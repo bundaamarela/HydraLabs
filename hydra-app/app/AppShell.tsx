@@ -1,23 +1,17 @@
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, type ReactNode, type CSSProperties } from 'react';
+import { useRouter } from 'next/navigation';
 import { useApp } from './providers';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { NotesPanel } from '@/components/layout/NotesPanel';
 
 export function AppShell({ children }: { children: ReactNode }) {
   const {
-    contentOffset, notesW, toggleSidebar, toggleTheme, openNotes, closeNotes, notesOpen,
-    isMobile, mobileNavOpen, openMobileNav, closeMobileNav,
+    sidebarW, toggleSidebar, toggleTheme, openNotes, closeNotes, notesOpen,
+    isMobile, mobileNavOpen, closeMobileNav,
   } = useApp();
   const router = useRouter();
-  const pathname = usePathname();
-
-  // Arena ('/') has its own sticky Topbar that hosts the hamburger; every other
-  // route is a plain page, so on mobile it needs top room to clear the floating
-  // hamburger button.
-  const isArena = pathname === '/';
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -50,11 +44,23 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [toggleSidebar, toggleTheme, openNotes, closeNotes, notesOpen, router]);
 
+  // Shell = grelha fixa de viewport inteira. Coluna 1 = sidebar (largura
+  // `auto`, conduzida pela largura do elemento, que anima suavemente); coluna 2 =
+  // conteúdo (minmax(0,1fr) → flexível e nunca transborda). No mobile a sidebar
+  // sai do fluxo (drawer fixo) e a grelha passa a uma única coluna.
+  const shell: CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: isMobile ? '1fr' : 'auto minmax(0, 1fr)',
+    gridTemplateRows: '100dvh',
+    height: '100dvh',
+    overflow: 'hidden',
+  };
+
   return (
-    <>
+    <div style={shell}>
       <Sidebar />
 
-      {/* mobile drawer backdrop */}
+      {/* backdrop do drawer (apenas mobile) */}
       {isMobile && (
         <div
           onClick={closeMobileNav}
@@ -69,40 +75,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* mobile hamburger — opens the drawer */}
-      {isMobile && !mobileNavOpen && (
-        <button
-          onClick={openMobileNav}
-          aria-label="Abrir menu"
-          style={{
-            position: 'fixed', top: 9, left: 10, zIndex: 30,
-            width: 34, height: 34, borderRadius: 8,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'var(--surface-3)', color: 'var(--cream)',
-            border: '0.5px solid var(--border)',
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
-            <line x1="2.5" y1="4.5"  x2="13.5" y2="4.5" />
-            <line x1="2.5" y1="8"    x2="13.5" y2="8" />
-            <line x1="2.5" y1="11.5" x2="13.5" y2="11.5" />
-          </svg>
-        </button>
-      )}
-
+      {/* coluna de conteúdo — flex-col: banda de cabeçalho (fixa) + região que rola */}
       <main
         style={{
-          marginLeft: contentOffset,
-          marginRight: notesW,
-          minHeight: '100dvh',
-          position: 'relative',
-          paddingTop: isMobile && !isArena ? 44 : undefined,
-          transition: 'margin-left 0.2s ease, margin-right 0.2s ease',
+          minWidth: 0, minHeight: 0, height: '100%',
+          display: 'flex', flexDirection: 'column',
+          overflow: 'hidden', position: 'relative',
         }}
       >
         {children}
       </main>
+
       <NotesPanel />
-    </>
+    </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useApp } from '@/app/providers';
+import { PageFrame } from '@/components/layout/PageFrame';
 import { ACTIVE_MODELS } from '@/lib/models';
 import { DEFAULT_ROLES } from '@/lib/roles';
 import {
@@ -355,35 +356,17 @@ export default function SettingsPage() {
   }
 
   return (
-    <main style={{
-      minHeight: '100dvh',
-      padding: '32px 32px 80px',
-      maxWidth: 760,
-    }}>
-
-      {/* ── header ── */}
-      <div style={{
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
-        marginBottom: 32,
-      }}>
-        <div>
-          <h1 style={{
-            fontSize: 20, fontWeight: 600,
-            color: 'var(--cream)', letterSpacing: '-0.5px',
-            marginBottom: 3,
-          }}>
-            Configuração
-          </h1>
-          <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>
-            Chaves API e preferências locais. Tudo guardado apenas no teu browser.
-          </p>
-        </div>
-
-        {/* save button */}
+    <PageFrame
+      title={
+        <h1 style={{ fontSize: 15, fontWeight: 600, color: 'var(--cream)', letterSpacing: '-0.3px', margin: 0 }}>
+          Configuração
+        </h1>
+      }
+      actions={
         <button
           onClick={handleSave}
           style={{
-            padding: '8px 20px',
+            padding: '7px 18px',
             borderRadius: 8,
             fontSize: 13, fontWeight: 500,
             background: saved ? 'var(--ok)' : 'var(--cream)',
@@ -397,7 +380,13 @@ export default function SettingsPage() {
           {saved && <IconCheck />}
           {saved ? 'Guardado' : 'Guardar'}
         </button>
-      </div>
+      }
+    >
+    <div style={{ padding: '24px 32px 80px', maxWidth: 760 }}>
+
+      <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: '0 0 24px' }}>
+        Chaves API e preferências locais. Tudo guardado apenas no teu browser.
+      </p>
 
       {/* ── api keys ── */}
       <Section title="Chaves API">
@@ -676,6 +665,7 @@ export default function SettingsPage() {
         </div>
       </Section>
 
-    </main>
+    </div>
+    </PageFrame>
   );
 }

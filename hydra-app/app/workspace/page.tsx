@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { PageFrame } from '@/components/layout/PageFrame';
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -238,34 +239,32 @@ export default function WorkspacePage() {
   }, []);
 
   return (
-    <main style={{
-      minHeight: '100dvh',
-      padding: '32px 32px 64px',
-      maxWidth: 1100,
-    }}>
-
-      {/* header */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28 }}>
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cream)', letterSpacing: '-0.5px', marginBottom: 3 }}>
+    <PageFrame
+      title={
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
+          <h1 style={{ fontSize: 15, fontWeight: 600, color: 'var(--cream)', letterSpacing: '-0.3px', margin: 0 }}>
             Workspaces
           </h1>
-          <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>
+          <span style={{ fontSize: 12, color: 'var(--fg-muted)', whiteSpace: 'nowrap' }}>
             {loading ? 'A carregar…' : `${workspaces.length} ${workspaces.length === 1 ? 'workspace' : 'workspaces'}`}
-          </p>
+          </span>
         </div>
+      }
+      actions={
         <button
           onClick={() => setShowModal(true)}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            padding: '8px 16px', borderRadius: 8,
+            padding: '7px 14px', borderRadius: 8,
             background: 'var(--cream)', color: 'var(--surface)',
             fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer',
           }}
         >
           <IconPlus /> Novo workspace
         </button>
-      </div>
+      }
+    >
+    <div style={{ padding: '24px 32px 64px', maxWidth: 1100 }}>
 
       {/* empty state */}
       {!loading && workspaces.length === 0 && (
@@ -311,6 +310,7 @@ export default function WorkspacePage() {
           }}
         />
       )}
-    </main>
+    </div>
+    </PageFrame>
   );
 }

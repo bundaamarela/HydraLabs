@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { useApp } from '@/app/providers';
 import { ACTIVE_MODELS, type ModeId, type ModelId, MODE_LABELS } from '@/lib/models';
 import type { Attachment } from '@/lib/orchestrator';
 import { TemplatesMenu } from './TemplatesMenu';
@@ -28,7 +27,6 @@ interface InputBarProps {
 }
 
 export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, onGrounding, selectedModels, onToggleModel }: InputBarProps) {
-  const { contentOffset, notesW } = useApp();
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -96,10 +94,11 @@ export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, on
 
   return (
     <div style={{
-      position: 'fixed', bottom: 0, zIndex: 20,
-      left: contentOffset, right: notesW,
-      transition: 'left 0.2s ease, right 0.2s ease',
-      padding: '0 16px 16px',
+      // docado no fundo da região de conteúdo da Arena (em fluxo, não fixo)
+      flexShrink: 0,
+      background: 'var(--surface)',
+      borderTop: '0.5px solid var(--border)',
+      padding: '10px 16px 14px',
     }}>
       {/* model multi-select — quais modelos disparam nesta query */}
       <div style={{ display: 'flex', gap: 5, marginBottom: 7, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>

@@ -3,8 +3,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useApp } from './providers';
 import { readTheme, densityToGrid } from '@/lib/theme';
-import { ACTIVE_MODELS, MODELS, type CrossAction, type ModelId, type ModeId } from '@/lib/models';
-import { Topbar } from '@/components/arena/Topbar';
+import { ACTIVE_MODELS, MODELS, MODE_LABELS, type CrossAction, type ModelId, type ModeId } from '@/lib/models';
+import { PageFrame } from '@/components/layout/PageFrame';
 import { QueryBubble } from '@/components/arena/QueryBubble';
 import { PanelGrid, type ModelState, type CrossExamTurn } from '@/components/arena/PanelGrid';
 import { ModeSelector } from '@/components/arena/ModeSelector';
@@ -446,25 +446,70 @@ export default function ArenaPage() {
   const isRunning = phase === 'running' || phase === 'synthesis';
 
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
-      <Topbar
-        mode={mode}
-        onModeClick={() => setModeSelectorOpen((o) => !o)}
-        processingCount={processingCount}
-        doneCount={doneCount}
-        density={density}
-        onDensity={setDensity}
-      />
-
-      <ModeSelector
-        open={modeSelectorOpen}
-        onClose={() => setModeSelectorOpen(false)}
-        mode={mode}
-        onSelect={handleModeSelect}
-      />
-
-      {/* scroll area — padded for InputBar */}
-      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 120 }}>
+    <PageFrame
+      scroll={false}
+      title={
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setModeSelectorOpen((o) => !o)}
+            style={{
+              fontSize: 11, fontWeight: 600, letterSpacing: '0.5px',
+              color: 'var(--fg-muted)',
+              background: 'var(--surface-3)',
+              border: '0.5px solid var(--border)',
+              borderRadius: 5, padding: '4px 9px', cursor: 'pointer',
+              transition: 'color 0.12s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--cream)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--fg-muted)'; }}
+          >
+            {MODE_LABELS[mode].toUpperCase()}
+          </button>
+          <ModeSelector
+            open={modeSelectorOpen}
+            onClose={() => setModeSelectorOpen(false)}
+            mode={mode}
+            onSelect={handleModeSelect}
+          />
+        </div>
+      }
+      actions={
+        <>
+          {(processingCount > 0 || doneCount > 0) && (
+            <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>
+              {processingCount > 0 && `${processingCount} a processar · `}
+              {doneCount} concluída{doneCount !== 1 ? 's' : ''}
+            </span>
+          )}
+          <div style={{
+            display: 'flex', gap: 1,
+            background: 'var(--surface-3)',
+            borderRadius: 6, padding: 2,
+            border: '0.5px solid var(--border)',
+          }}>
+            {([2, 3, 6] as const).map((d) => (
+              <button
+                key={d}
+                onClick={() => setDensity(d)}
+                style={{
+                  width: 32, height: 24, borderRadius: 4,
+                  fontSize: 11, fontWeight: 500,
+                  background: density === d ? 'var(--surface-2)' : 'transparent',
+                  color: density === d ? 'var(--cream)' : 'var(--fg-muted)',
+                  border: density === d ? '0.5px solid var(--border)' : 'none',
+                  cursor: 'pointer',
+                  transition: 'background 0.12s, color 0.12s',
+                }}
+              >
+                {d}×
+              </button>
+            ))}
+          </div>
+        </>
+      }
+    >
+      {/* área que rola — resultados / síntese / estado vazio */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
         <QueryBubble query={query} attachment={submittedAttachment} />
 
         {query && (
@@ -485,7 +530,7 @@ export default function ArenaPage() {
         {!query && (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            minHeight: 'calc(100dvh - 120px)',
+            minHeight: '100%',
             flexDirection: 'column', gap: 12,
           }}>
             <div style={{
@@ -514,6 +559,6 @@ export default function ArenaPage() {
         selectedModels={selectedModels}
         onToggleModel={handleToggleModel}
       />
-    </div>
+    </PageFrame>
   );
 }

@@ -8,9 +8,9 @@ import {
 // ── sidebar sizing ─────────────────────────────────────────────────────────────
 const SIDEBAR_MIN       = 180;  // narrowest the user can drag to
 const SIDEBAR_MAX       = 420;  // widest the user can drag to
-const SIDEBAR_DEFAULT   = 220;  // initial expanded width
-const SIDEBAR_COLLAPSED = 52;   // icon-only rail
-const NARROW_BREAKPOINT = 760;  // below this the sidebar auto-collapses to a rail
+const SIDEBAR_DEFAULT   = 240;  // initial expanded width
+const SIDEBAR_COLLAPSED = 64;   // icon-only rail
+const NARROW_BREAKPOINT = 768;  // below this the sidebar auto-collapses to a rail
 const MOBILE_BREAKPOINT = 640;  // below this the sidebar becomes an overlay drawer
 
 const clampW = (w: number) =>

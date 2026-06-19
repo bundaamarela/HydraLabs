@@ -6,6 +6,7 @@ import {
 } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useApp } from '@/app/providers';
+import { PageFrame } from '@/components/layout/PageFrame';
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -838,96 +839,87 @@ export default function WorkspaceEditorPage() {
 
   if (!workspace) {
     return (
-      <div style={{ marginLeft: 40, padding: 32, color: 'var(--fg-muted)', fontSize: 13 }}>
-        A carregar workspace…
-      </div>
+      <PageFrame title={<span style={{ fontSize: 13, color: 'var(--fg-muted)' }}>Workspace</span>}>
+        <div style={{ padding: 32, color: 'var(--fg-muted)', fontSize: 13 }}>
+          A carregar workspace…
+        </div>
+      </PageFrame>
     );
   }
 
   const saveLabel = saveStatus === 'saved' ? 'Guardado' : saveStatus === 'saving' ? 'A guardar…' : '●';
 
   return (
-    <>
-      {/* left toolbar */}
+    <PageFrame
+      title={
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <button
+            onClick={() => router.push('/workspace')}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--fg-muted)', fontSize: 12, padding: '4px 0', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            <IconArrowLeft /> Workspaces
+          </button>
+          <span style={{ color: 'var(--fg-faint)', fontSize: 12 }}>›</span>
+          <span style={{ fontSize: 12, color: 'var(--cream)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{workspace.title}</span>
+        </div>
+      }
+      actions={
+        <>
+          {/* save status */}
+          <span style={{
+            fontSize: 11, color: saveStatus === 'saved' ? 'var(--ok)' : saveStatus === 'saving' ? 'var(--fg-muted)' : 'var(--fg-faint)',
+            transition: 'color 0.3s',
+          }}>
+            {saveLabel}
+          </span>
+
+          {/* export button */}
+          <div ref={exportRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setExportOpen((o) => !o)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '6px 12px', borderRadius: 7,
+                background: exportOpen ? 'var(--surface-3)' : 'var(--surface-2)',
+                border: '0.5px solid var(--border)',
+                color: 'var(--fg-muted)', fontSize: 12,
+                cursor: 'pointer',
+              }}
+            >
+              <IconDownload /> Exportar ↓
+            </button>
+            {exportOpen && (
+              <div style={{
+                position: 'absolute', right: 0, top: 'calc(100% + 4px)',
+                background: 'var(--surface-3)', border: '0.5px solid var(--border)',
+                borderRadius: 8, padding: 4, zIndex: 100,
+                animation: 'popIn 0.1s ease', minWidth: 160,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+              }}>
+                {[
+                  { label: 'Markdown (.md)', fn: handleExportMD },
+                  { label: 'Imprimir / PDF', fn: handlePrint },
+                ].map(({ label, fn }) => (
+                  <button key={label} onClick={fn} style={{ width: '100%', padding: '7px 10px', borderRadius: 5, fontSize: 12, color: 'var(--cream)', textAlign: 'left', transition: 'background 0.1s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      }
+    >
+      {/* left toolbar (fixo, vertical) */}
       <LeftToolbar onAdd={(t) => addBlock(t)} />
 
-      <main style={{
-        minHeight: '100dvh',
-        paddingBottom: 80,
-        maxWidth: 780,
-        margin: '0 auto 0 40px',
-      }}>
-
-        {/* ── header ── */}
-        <div style={{
-          padding: '20px 32px 0',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderBottom: '0.5px solid var(--border)',
-          marginBottom: 28,
-        }}>
-          {/* breadcrumb + back */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              onClick={() => router.push('/workspace')}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--fg-muted)', fontSize: 12, padding: '4px 0' }}
-            >
-              <IconArrowLeft /> Workspaces
-            </button>
-            <span style={{ color: 'var(--fg-faint)', fontSize: 12 }}>›</span>
-            <span style={{ fontSize: 12, color: 'var(--cream)' }}>{workspace.title}</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 8 }}>
-            {/* save status */}
-            <span style={{
-              fontSize: 11, color: saveStatus === 'saved' ? 'var(--ok)' : saveStatus === 'saving' ? 'var(--fg-muted)' : 'var(--fg-faint)',
-              transition: 'color 0.3s',
-            }}>
-              {saveLabel}
-            </span>
-
-            {/* export button */}
-            <div ref={exportRef} style={{ position: 'relative' }}>
-              <button
-                onClick={() => setExportOpen((o) => !o)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 5,
-                  padding: '6px 12px', borderRadius: 7,
-                  background: exportOpen ? 'var(--surface-3)' : 'var(--surface-2)',
-                  border: '0.5px solid var(--border)',
-                  color: 'var(--fg-muted)', fontSize: 12,
-                  cursor: 'pointer',
-                }}
-              >
-                <IconDownload /> Exportar ↓
-              </button>
-              {exportOpen && (
-                <div style={{
-                  position: 'absolute', right: 0, top: 'calc(100% + 4px)',
-                  background: 'var(--surface-3)', border: '0.5px solid var(--border)',
-                  borderRadius: 8, padding: 4, zIndex: 100,
-                  animation: 'popIn 0.1s ease', minWidth: 160,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
-                }}>
-                  {[
-                    { label: 'Markdown (.md)', fn: handleExportMD },
-                    { label: 'Imprimir / PDF', fn: handlePrint },
-                  ].map(({ label, fn }) => (
-                    <button key={label} onClick={fn} style={{ width: '100%', padding: '7px 10px', borderRadius: 5, fontSize: 12, color: 'var(--cream)', textAlign: 'left', transition: 'background 0.1s' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      <div style={{ maxWidth: 780, margin: '0 auto 0 40px', paddingBottom: 80 }}>
 
         {/* ── title + description ── */}
-        <div style={{ padding: '0 32px', marginBottom: 24 }}>
+        <div style={{ padding: '24px 32px 0', marginBottom: 24 }}>
           {editingTitle ? (
             <input
               autoFocus
@@ -1047,7 +1039,7 @@ export default function WorkspaceEditorPage() {
             </div>
           )}
         </div>
-      </main>
+      </div>
 
       {/* session picker modal */}
       {sessionPicker && (
@@ -1056,6 +1048,6 @@ export default function WorkspaceEditorPage() {
           onClose={() => setSessionPicker(null)}
         />
       )}
-    </>
+    </PageFrame>
   );
 }
