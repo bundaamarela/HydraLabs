@@ -55,7 +55,7 @@ function readUseRoles(): boolean {
 }
 
 export default function ArenaPage() {
-  const { activeSessionId, setActiveSessionId } = useApp();
+  const { activeSessionId, setActiveSessionId, pendingSessionId, clearPendingSession, openSession } = useApp();
 
   const [query, setQuery]         = useState('');
   const [mode, setMode]           = useState<ModeId>('raciocinio');
@@ -80,12 +80,67 @@ export default function ArenaPage() {
     inputBarRef.current?.insert(text);
   }, []);
 
-  // Estado vazio → reabre uma sessão recente (define o modo + pergunta no input).
-  const handleReopen = useCallback((s: { query: string; mode: string }) => {
-    const m = s.mode as ModeId;
-    if (MODE_LABELS[m]) setMode(m);
-    inputBarRef.current?.insert(s.query);
-  }, []);
+  // Estado vazio / sidebar / biblioteca → pede a reabertura de uma sessão guardada.
+  const handleReopen = useCallback((sessionId: string) => {
+    openSession(sessionId);
+  }, [openSession]);
+
+  // Consome o pedido de reabertura: hidrata a Arena com a sessão guardada
+  // (pergunta + respostas por painel + cruzamentos + síntese), em estado 'done'.
+  useEffect(() => {
+    if (!pendingSessionId) return;
+    const id = pendingSessionId;
+    clearPendingSession();
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`/api/sessions/${id}`);
+        if (!r.ok) return;
+        const d = (await r.json()) as {
+          query: string; mode: string; synthesis?: string | null;
+          responses?: { model: string; content: string; reasoning?: string | null }[];
+          crossExams?: { sourceModel: string; targetModel: string; action: string; content: string; reasoning?: string | null }[];
+        };
+        if (cancelled) return;
+
+        const responses = d.responses ?? [];
+        const ids = responses.map((x) => x.model as ModelId);
+
+        const states: Partial<Record<ModelId, ModelState>> = INITIAL_STATES();
+        for (const resp of responses) {
+          states[resp.model as ModelId] = {
+            status: 'done', content: resp.content, reasoning: resp.reasoning ?? undefined,
+          };
+        }
+        for (const cx of d.crossExams ?? []) {
+          const tgt = cx.targetModel as ModelId;
+          const panel = states[tgt] ?? { status: 'done' as PanelStatus, content: '' };
+          const turn: CrossExamTurn = {
+            id: `cx_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            sourceModel: cx.sourceModel as ModelId,
+            action: cx.action as CrossAction,
+            status: 'done', content: cx.content, reasoning: cx.reasoning ?? undefined,
+          };
+          panel.crossExams = [...(panel.crossExams ?? []), turn];
+          states[tgt] = panel;
+        }
+
+        abortRef.current?.abort(); // pára qualquer stream em curso
+
+        setPanelStates(states);
+        setRoundModels(ids.length ? ids : ACTIVE_MODELS.map((m) => m.id));
+        setQuery(d.query);
+        setSubmittedAttachment(null);
+        const m = d.mode as ModeId;
+        if (MODE_LABELS[m]) setMode(m);
+        if (d.synthesis) { setSynthesisContent(d.synthesis); setSynthesisStatus('done'); }
+        else { setSynthesisContent(''); setSynthesisStatus('idle'); }
+        setPhase('done');
+        setActiveSessionId(id);
+      } catch { /* erros sobem ao error boundary */ }
+    })();
+    return () => { cancelled = true; };
+  }, [pendingSessionId, clearPendingSession, setActiveSessionId]);
 
   // ── helpers ──────────────────────────────────────────────────────────────
 

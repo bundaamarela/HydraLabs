@@ -454,6 +454,7 @@ function SessionCard({ session, onDelete }: {
 }) {
   const [hovered, setHovered] = useState(false);
   const router = useRouter();
+  const { openSession } = useApp();
 
   return (
     <div
@@ -469,7 +470,7 @@ function SessionCard({ session, onDelete }: {
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={() => router.push('/')}
+      onClick={() => { openSession(session.id); router.push('/'); }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <span style={{
@@ -546,6 +547,7 @@ function SessionRow({ session, onDelete }: {
 }) {
   const [hovered, setHovered] = useState(false);
   const router = useRouter();
+  const { openSession } = useApp();
 
   return (
     <div
@@ -560,7 +562,7 @@ function SessionRow({ session, onDelete }: {
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={() => router.push('/')}
+      onClick={() => { openSession(session.id); router.push('/'); }}
     >
       <span style={{
         fontSize: 10, fontWeight: 500, color: 'var(--fg-muted)',

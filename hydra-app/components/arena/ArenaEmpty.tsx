@@ -66,8 +66,8 @@ interface ArenaEmptyProps {
   density: 2 | 3 | 6;
   /** Preenche o input com um prompt (sugestão/template). */
   onPickPrompt: (text: string) => void;
-  /** Reabre uma sessão recente (modo + pergunta no input). */
-  onReopen: (session: { query: string; mode: string }) => void;
+  /** Reabre uma sessão recente (carrega-a na Arena). */
+  onReopen: (sessionId: string) => void;
 }
 
 const sectionLabel: CSSProperties = {
@@ -218,7 +218,7 @@ export function ArenaEmpty({ models, density, onPickPrompt, onReopen }: ArenaEmp
             {recent.map((s) => (
               <button
                 key={s.id}
-                onClick={() => onReopen({ query: s.query, mode: s.mode })}
+                onClick={() => onReopen(s.id)}
                 title={s.query}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,

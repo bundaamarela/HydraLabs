@@ -240,7 +240,7 @@ export function Sidebar() {
   const {
     sidebarCollapsed, sidebarW, sidebarDefault,
     toggleSidebar, toggleTheme, theme, setSidebarWidth,
-    isMobile, mobileNavOpen, closeMobileNav,
+    isMobile, mobileNavOpen, closeMobileNav, openSession,
   } = useApp();
   const pathname = usePathname();
   const router   = useRouter();
@@ -355,7 +355,7 @@ export function Sidebar() {
                     }}
                     onMouseEnter={() => setHovered(item.id)}
                     onMouseLeave={() => setHovered(null)}
-                    onClick={() => { router.push('/'); if (isMobile) closeMobileNav(); }}
+                    onClick={() => { openSession(item.id); router.push('/'); if (isMobile) closeMobileNav(); }}
                     title={item.title}
                   >
                     <div style={s.historyTitle}>{item.title}</div>

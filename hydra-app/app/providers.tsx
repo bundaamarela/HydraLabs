@@ -21,6 +21,7 @@ interface AppState {
   sidebarCollapsed: boolean;   // effective (includes responsive auto-collapse)
   notesOpen: boolean;
   activeSessionId: string | null;
+  pendingSessionId: string | null;   // sessão pedida para reabrir na Arena
   sidebarW: number;            // effective rendered width of the sidebar element
   sidebarWidth: number;        // user's expanded-width preference
   sidebarMin: number;
@@ -39,6 +40,8 @@ interface AppState {
   closeMobileNav: () => void;
   toggleMobileNav: () => void;
   setActiveSessionId: (id: string | null) => void;
+  openSession: (id: string) => void;       // reabrir sessão guardada na Arena
+  clearPendingSession: () => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -52,6 +55,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
 
   // Mobile: the sidebar is an overlay drawer (always expanded, never a rail) and
   // reserves no horizontal space. Desktop/tablet: narrow viewport forces the rail.
@@ -89,6 +93,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const closeMobileNav  = useCallback(() => setMobileNavOpen(false), []);
   const toggleMobileNav = useCallback(() => setMobileNavOpen((o) => !o), []);
 
+  const openSession        = useCallback((id: string) => setPendingSessionId(id), []);
+  const clearPendingSession = useCallback(() => setPendingSessionId(null), []);
+
   // Apply theme + restore persisted sidebar prefs on mount
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -125,7 +132,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider
       value={{
-        theme, sidebarCollapsed, notesOpen, activeSessionId,
+        theme, sidebarCollapsed, notesOpen, activeSessionId, pendingSessionId,
         sidebarW, sidebarWidth,
         sidebarMin: SIDEBAR_MIN, sidebarMax: SIDEBAR_MAX, sidebarDefault: SIDEBAR_DEFAULT,
         notesW,
@@ -134,7 +141,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         openNotes:  () => setNotesOpen(true),
         closeNotes: () => setNotesOpen(false),
         openMobileNav, closeMobileNav, toggleMobileNav,
-        setActiveSessionId,
+        setActiveSessionId, openSession, clearPendingSession,
       }}
     >
       {children}
