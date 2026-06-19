@@ -182,6 +182,44 @@ export const MODALITIES: Record<ModelId, { image: boolean; pdf: boolean }> = {
   manus:      { image: false, pdf: false },
 };
 
+/**
+ * Cor de acento por modelo — identidade visual do painel. Paleta contida e
+ * harmoniosa (uma matiz por modelo), distinguível sem ser berrante; usada em
+ * borda/badge e legível em claro e escuro.
+ */
+export const MODEL_ACCENTS: Record<ModelId, string> = {
+  chatgpt:    '#6FA287', // sálvia
+  grok:       '#8893A8', // ardósia
+  claude:     '#C28E5E', // âmbar/argila
+  gemini:     '#7C93C9', // azul suave
+  deepseek:   '#6E78B8', // índigo
+  kimi:       '#A87FB0', // violeta
+  perplexity: '#5FA39A', // teal
+  mistral:    '#C97A54', // telha
+  zai:        '#8A86C0', // lilás
+  manus:      '#8893A8', // ardósia
+};
+
+export interface ModelCapabilities {
+  grounding: boolean; // pesquisa web ao vivo
+  reasoning: boolean; // cadeia de pensamento
+  vision: boolean;    // entrada de imagem
+}
+
+/** Capacidades por modelo — derivam da config; alimentam os ícones do cabeçalho. */
+export const MODEL_CAPABILITIES: Record<ModelId, ModelCapabilities> = {
+  chatgpt:    { grounding: false, reasoning: true,  vision: true  },
+  grok:       { grounding: true,  reasoning: false, vision: true  },
+  claude:     { grounding: false, reasoning: true,  vision: true  },
+  gemini:     { grounding: true,  reasoning: true,  vision: true  },
+  deepseek:   { grounding: false, reasoning: true,  vision: false },
+  kimi:       { grounding: false, reasoning: true,  vision: true  },
+  perplexity: { grounding: true,  reasoning: false, vision: false },
+  mistral:    { grounding: false, reasoning: false, vision: false },
+  zai:        { grounding: false, reasoning: false, vision: false },
+  manus:      { grounding: false, reasoning: false, vision: false },
+};
+
 export function getModelById(id: ModelId): ModelConfig | undefined {
   return MODELS.find((m) => m.id === id);
 }

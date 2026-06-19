@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import {
   ACTIVE_MODELS, CROSS_ACTIONS, crossExamTag, getModelById,
+  MODEL_ACCENTS, MODEL_CAPABILITIES,
   type ModelConfig, type ModelId, type CrossAction,
 } from '@/lib/models';
 
@@ -52,6 +53,35 @@ function IconChevron() {
   return (
     <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="4,2.5 8,6 4,9.5" />
+    </svg>
+  );
+}
+
+// Ícones de capacidade do cabeçalho: globo=web, "pensa"=raciocínio, olho=visão.
+function IconGlobe() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.1">
+      <circle cx="7" cy="7" r="5.2" />
+      <ellipse cx="7" cy="7" rx="2.2" ry="5.2" />
+      <line x1="1.8" y1="7" x2="12.2" y2="7" />
+    </svg>
+  );
+}
+
+function IconBrain() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 1.9a3.9 3.9 0 0 0-2.4 7c.3.25.5.6.5 1v.3h3.8v-.3c0-.4.2-.75.5-1A3.9 3.9 0 0 0 7 1.9Z" />
+      <line x1="5.5" y1="12.1" x2="8.5" y2="12.1" />
+    </svg>
+  );
+}
+
+function IconEye() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 7s2.4-4 6-4 6 4 6 4-2.4 4-6 4-6-4-6-4Z" />
+      <circle cx="7" cy="7" r="1.6" />
     </svg>
   );
 }
@@ -218,6 +248,9 @@ export function Panel({ model, status, content, reasoning, sources, unsupported,
     cursor: 'pointer', padding: '2px 6px', borderRadius: 3,
     transition: 'color 0.1s',
   };
+
+  const accent = MODEL_ACCENTS[model.id];
+  const caps = MODEL_CAPABILITIES[model.id];
   const wordCount = content ? content.trim().split(/\s+/).filter(Boolean).length : 0;
   const [showReasoning, setShowReasoning] = useState(false);
   useEffect(() => { setShowReasoning(readShowReasoningDefault()); }, []);
@@ -262,23 +295,38 @@ export function Panel({ model, status, content, reasoning, sources, unsupported,
     <div style={{
       background: 'var(--surface-2)',
       border: `0.5px solid ${status === 'error' ? 'color-mix(in srgb, var(--err) 40%, var(--border))' : 'var(--border)'}`,
+      borderLeft: `2.5px solid ${accent}`,
       borderRadius: 10,
       display: 'flex', flexDirection: 'column',
       minHeight: 180,
     }}>
       {/* header */}
       <div style={{
-        padding: '10px 12px',
+        padding: '9px 12px',
         borderBottom: '0.5px solid var(--border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexShrink: 0,
+        flexShrink: 0, gap: 8,
       }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--cream)' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+          <span
+            title={model.name}
+            style={{
+              flexShrink: 0, height: 16, padding: '0 4px', borderRadius: 4,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 8.5, fontWeight: 700, letterSpacing: '0.3px',
+              background: `color-mix(in srgb, ${accent} 16%, transparent)`,
+              color: accent,
+              border: `0.5px solid color-mix(in srgb, ${accent} 45%, transparent)`,
+            }}
+          >
+            {model.name.slice(0, 2).toUpperCase()}
+          </span>
+          <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--cream)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {model.name}
           </span>
-          {grounding && (model.id === 'grok' || model.id === 'gemini') && (
+          {grounding && caps.grounding && (
             <span style={{
+              flexShrink: 0,
               fontSize: 8, fontWeight: 700, letterSpacing: '0.5px',
               color: 'var(--ok)', border: '0.5px solid var(--ok)',
               borderRadius: 3, padding: '1px 4px', opacity: 0.85,
@@ -287,7 +335,14 @@ export function Panel({ model, status, content, reasoning, sources, unsupported,
             </span>
           )}
         </span>
-        <StatusBadge status={status} />
+        <span style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--fg-faint)' }}>
+            {caps.grounding && <span title="Pesquisa web ao vivo" style={{ display: 'flex' }}><IconGlobe /></span>}
+            {caps.reasoning && <span title="Raciocínio (cadeia de pensamento)" style={{ display: 'flex' }}><IconBrain /></span>}
+            {caps.vision && <span title="Visão (analisa imagens)" style={{ display: 'flex' }}><IconEye /></span>}
+          </span>
+          <StatusBadge status={status} />
+        </span>
       </div>
 
       {/* reasoning disclosure — colapsado por defeito, acima da resposta */}
