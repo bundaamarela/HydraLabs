@@ -48,12 +48,15 @@ function saveKeys(keys: ApiKeys) {
 
 // ── icons ─────────────────────────────────────────────────────────────────────
 
+// Ícone de chave (KeyRound): argola + haste diagonal com dois dentes — semântica
+// correcta para um campo de chave API (substitui a antiga lupa).
 function IconKey() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="6" cy="7" r="3.5" />
-      <line x1="9" y1="9.5" x2="14" y2="14.5" />
-      <line x1="11.5" y1="12" x2="13.5" y2="12" />
+      <circle cx="5.5" cy="10.5" r="3" />
+      <line x1="7.7" y1="8.3" x2="13" y2="3" />
+      <line x1="10.6" y1="5.4" x2="12.3" y2="7.1" />
+      <line x1="12" y1="4" x2="13.6" y2="5.7" />
     </svg>
   );
 }
@@ -280,10 +283,25 @@ function ToggleRow({ label, description, checked, onChange }: {
   );
 }
 
+// ── section sub-nav ─────────────────────────────────────────────────────────────
+
+const SECTIONS = [
+  { id: 'chaves',       label: 'Chaves'       },
+  { id: 'papeis',       label: 'Papéis'       },
+  { id: 'aparencia',    label: 'Aparência'    },
+  { id: 'preferencias', label: 'Preferências' },
+  { id: 'atalhos',      label: 'Atalhos'      },
+  { id: 'sobre',        label: 'Sobre'        },
+] as const;
+
+type SectionId = (typeof SECTIONS)[number]['id'];
+const SECTION_IDS = SECTIONS.map((s) => s.id) as readonly SectionId[];
+
 // ── main page ─────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
-  const { theme, toggleTheme } = useApp();
+  const { theme, toggleTheme, isMobile } = useApp();
+  const [section, setSection] = useState<SectionId>('chaves');
 
   const [keys, setKeys] = useState<ApiKeys>({});
   const [saved, setSaved] = useState(false);
@@ -316,6 +334,23 @@ export default function SettingsPage() {
         if (p.useRoles       !== undefined) setUseRoles(p.useRoles);
       } catch { /* ignore */ }
     }
+  }, []);
+
+  // Restaura a secção activa: hash do URL (#chaves) tem prioridade, depois
+  // localStorage; default Chaves. Mantém-se após reload e ao navegar para cá.
+  useEffect(() => {
+    const fromHash = (typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '');
+    if (SECTION_IDS.includes(fromHash as SectionId)) { setSection(fromHash as SectionId); return; }
+    try {
+      const stored = localStorage.getItem('hydra_settings_section');
+      if (stored && SECTION_IDS.includes(stored as SectionId)) setSection(stored as SectionId);
+    } catch { /* ignore */ }
+  }, []);
+
+  const selectSection = useCallback((id: SectionId) => {
+    setSection(id);
+    try { localStorage.setItem('hydra_settings_section', id); } catch { /* ignore */ }
+    try { window.history.replaceState(null, '', `#${id}`); } catch { /* ignore */ }
   }, []);
 
   const handleKeyChange = useCallback((key: keyof ApiKeys, value: string) => {
@@ -357,6 +392,7 @@ export default function SettingsPage() {
 
   return (
     <PageFrame
+      scroll={false}
       title={
         <h1 style={{ fontSize: 15, fontWeight: 600, color: 'var(--cream)', letterSpacing: '-0.3px', margin: 0 }}>
           Configuração
@@ -382,13 +418,73 @@ export default function SettingsPage() {
         </button>
       }
     >
-    <div style={{ padding: '24px 32px 80px', maxWidth: 760 }}>
+    <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
 
-      <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: '0 0 24px' }}>
-        Chaves API e preferências locais. Tudo guardado apenas no teu browser.
-      </p>
+      {/* sub-nav vertical (desktop) — fixa; só a secção activa rola */}
+      {!isMobile && (
+        <nav style={{
+          width: 196, flexShrink: 0,
+          borderRight: '0.5px solid var(--border)',
+          padding: '16px 10px', overflowY: 'auto',
+          display: 'flex', flexDirection: 'column', gap: 2,
+        }}>
+          {SECTIONS.map((sec) => {
+            const active = section === sec.id;
+            return (
+              <button
+                key={sec.id}
+                onClick={() => selectSection(sec.id)}
+                style={{
+                  textAlign: 'left', padding: '8px 11px', borderRadius: 7,
+                  fontSize: 12.5, fontWeight: active ? 500 : 400,
+                  background: active ? 'var(--surface-3)' : 'transparent',
+                  color: active ? 'var(--cream)' : 'var(--fg-muted)',
+                  cursor: 'pointer', transition: 'background 0.12s, color 0.12s',
+                }}
+                onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.color = 'var(--cream)'; }}
+                onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.color = 'var(--fg-muted)'; }}
+              >
+                {sec.label}
+              </button>
+            );
+          })}
+        </nav>
+      )}
 
-      {/* ── api keys ── */}
+      {/* coluna da secção activa */}
+      <div style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
+
+        {/* sub-nav horizontal (mobile) */}
+        {isMobile && (
+          <div style={{
+            display: 'flex', gap: 6, overflowX: 'auto',
+            padding: '12px 16px', borderBottom: '0.5px solid var(--border)',
+          }}>
+            {SECTIONS.map((sec) => {
+              const active = section === sec.id;
+              return (
+                <button
+                  key={sec.id}
+                  onClick={() => selectSection(sec.id)}
+                  style={{
+                    flexShrink: 0, padding: '6px 12px', borderRadius: 7,
+                    fontSize: 12, fontWeight: 500,
+                    background: active ? 'var(--cream)' : 'var(--surface-2)',
+                    color: active ? 'var(--surface)' : 'var(--fg-muted)',
+                    border: '0.5px solid ' + (active ? 'transparent' : 'var(--border)'),
+                    cursor: 'pointer', whiteSpace: 'nowrap',
+                  }}
+                >
+                  {sec.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div style={{ padding: isMobile ? '20px 16px 80px' : '24px 32px 80px', maxWidth: 720 }}>
+
+      {section === 'chaves' && (
       <Section title="Chaves API">
         <p style={{ fontSize: 11.5, color: 'var(--fg-muted)', marginBottom: 16, lineHeight: 1.6 }}>
           As chaves são guardadas em <code style={{ fontSize: 10.5, color: 'var(--cream)', background: 'var(--surface-3)', padding: '1px 5px', borderRadius: 3 }}>localStorage</code> e enviadas apenas ao servidor local para cada pedido. Nunca saem do teu dispositivo.
@@ -424,8 +520,9 @@ export default function SettingsPage() {
           </button>
         </div>
       </Section>
+      )}
 
-      {/* ── model roles ── */}
+      {section === 'papeis' && (
       <Section title="Papéis por modelo">
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -483,8 +580,9 @@ export default function SettingsPage() {
           </div>
         ))}
       </Section>
+      )}
 
-      {/* ── appearance ── */}
+      {section === 'aparencia' && (
       <Section title="Aparência">
         {/* accent */}
         <div style={{ padding: '4px 0 14px', borderBottom: '0.5px solid var(--border)' }}>
@@ -576,8 +674,9 @@ export default function SettingsPage() {
           </div>
         </div>
       </Section>
+      )}
 
-      {/* ── preferences ── */}
+      {section === 'preferencias' && (
       <Section title="Preferências">
         <ToggleRow
           label="Guardar notas automaticamente"
@@ -625,8 +724,9 @@ export default function SettingsPage() {
           </button>
         </div>
       </Section>
+      )}
 
-      {/* ── keyboard shortcuts ── */}
+      {section === 'atalhos' && (
       <Section title="Atalhos de teclado">
         <ShortcutRow action="Enviar consulta"                keys={['Enter']} />
         <ShortcutRow action="Nova linha na consulta"         keys={['Shift', 'Enter']} />
@@ -635,11 +735,13 @@ export default function SettingsPage() {
         <ShortcutRow action="Abrir / fechar painel de notas" keys={['Ctrl', 'N']} />
         <ShortcutRow action="Ir para Arena"                  keys={['Ctrl', '1']} />
         <ShortcutRow action="Ir para Biblioteca"             keys={['Ctrl', '2']} />
-        <ShortcutRow action="Ir para Configuração"           keys={['Ctrl', '3']} />
+        <ShortcutRow action="Ir para Workspace"              keys={['Ctrl', '3']} />
+        <ShortcutRow action="Ir para Configuração"           keys={['Ctrl', '4']} />
         <ShortcutRow action="Alternar tema"                  keys={['Ctrl', 'Shift', 'T']} />
       </Section>
+      )}
 
-      {/* ── about ── */}
+      {section === 'sobre' && (
       <Section title="Sobre">
         <div style={{
           display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
@@ -664,7 +766,10 @@ export default function SettingsPage() {
           ))}
         </div>
       </Section>
+      )}
 
+        </div>
+      </div>
     </div>
     </PageFrame>
   );
