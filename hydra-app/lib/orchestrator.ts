@@ -1,9 +1,17 @@
 import { streamText, type JSONValue } from 'ai';
-import { MODELS, SYSTEM_PROMPTS, type ApiKeys, type ModelId, type ModeId } from './models';
+import { MODELS, MODALITIES, SYSTEM_PROMPTS, type ApiKeys, type ModelId, type ModeId } from './models';
 
 export interface SourceRef {
   url: string;
   title?: string;
+}
+
+export interface Attachment {
+  kind: 'image' | 'pdf' | 'text';
+  /** image/pdf: data URL base64; text: conteúdo inline. */
+  data: string;
+  mediaType: string;
+  name: string;
 }
 
 export interface StreamToken {
@@ -12,6 +20,8 @@ export interface StreamToken {
   kind?: 'text' | 'reasoning' | 'sources';
   token?: string;
   sources?: SourceRef[];
+  /** O modelo não suporta a modalidade do anexo: respondeu só ao texto. */
+  unsupported?: boolean;
   done?: boolean;
   error?: string;
 }
@@ -27,6 +37,53 @@ export interface OrchestrateOptions {
   useRoles?: boolean;
   /** Pesquisa web ao vivo (grok: Web+X; gemini: Google Search). Os outros ignoram. */
   grounding?: boolean;
+  /** Anexo (imagem/PDF/texto). Modelos sem suporte recebem só o texto. */
+  attachment?: Attachment;
+}
+
+// Conteúdo da mensagem de utilizador: string simples ou partes multimodais.
+type UserContent =
+  | string
+  | Array<
+      | { type: 'text'; text: string }
+      | { type: 'image'; image: string }
+      | { type: 'file'; data: string; mimeType: string }
+    >;
+
+/**
+ * Constrói o conteúdo por modelo a partir do anexo. Texto é sempre anexado ao
+ * prompt; imagem/PDF só entram se o modelo suportar a modalidade — caso
+ * contrário envia-se só o texto e marca-se o painel como `unsupported`.
+ */
+function buildUserContent(
+  query: string,
+  attachment: Attachment | undefined,
+  modalities: { image: boolean; pdf: boolean },
+): { content: UserContent; unsupported: boolean } {
+  if (!attachment) return { content: query, unsupported: false };
+
+  if (attachment.kind === 'text') {
+    return {
+      content: `${query}\n\n--- Documento anexado: ${attachment.name} ---\n${attachment.data}`,
+      unsupported: false,
+    };
+  }
+
+  const supported = attachment.kind === 'image' ? modalities.image : modalities.pdf;
+  if (!supported) return { content: query, unsupported: true };
+
+  const parts: Array<
+    | { type: 'text'; text: string }
+    | { type: 'image'; image: string }
+    | { type: 'file'; data: string; mimeType: string }
+  > = [{ type: 'text', text: query }];
+
+  if (attachment.kind === 'image') {
+    parts.push({ type: 'image', image: attachment.data });
+  } else {
+    parts.push({ type: 'file', data: attachment.data, mimeType: attachment.mediaType || 'application/pdf' });
+  }
+  return { content: parts, unsupported: false };
 }
 
 const TIMEOUT_MS = 30_000;
@@ -103,10 +160,17 @@ export async function orchestrate(
         const role = useRoles ? roles?.[modelConfig.id]?.trim() : undefined;
         const system = role ? `${basePrompt}\n\n${role}` : basePrompt;
 
+        const { content, unsupported } = buildUserContent(
+          query,
+          opts.attachment,
+          MODALITIES[modelConfig.id],
+        );
+        if (unsupported) onToken({ model: modelConfig.id, unsupported: true });
+
         const result = streamText({
           model: modelConfig.getModel(keys, { grounding }),
           system,
-          messages: [{ role: 'user', content: query }],
+          messages: [{ role: 'user', content }],
           providerOptions: buildProviderOptions(modelConfig.id, grounding),
         });
 

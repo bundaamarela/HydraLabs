@@ -11,6 +11,7 @@ import { InputBar } from '@/components/arena/InputBar';
 import { SynthesisPanel } from '@/components/arena/SynthesisPanel';
 import type { PanelStatus } from '@/components/arena/Panel';
 import type { ApiKeys } from '@/lib/models';
+import type { Attachment } from '@/lib/orchestrator';
 import { DEFAULT_ROLES } from '@/lib/roles';
 
 type ArenaPhase = 'idle' | 'running' | 'synthesis' | 'done';
@@ -58,6 +59,7 @@ export default function ArenaPage() {
   const [mode, setMode]           = useState<ModeId>('raciocinio');
   const [density, setDensity]     = useState<2 | 3 | 6>(3);
   const [grounding, setGrounding] = useState(false);
+  const [submittedAttachment, setSubmittedAttachment] = useState<Attachment | null>(null);
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
   const [panelStates, setPanelStates] = useState<Partial<Record<ModelId, ModelState>>>(INITIAL_STATES());
   const [phase, setPhase]         = useState<ArenaPhase>('idle');
@@ -91,6 +93,7 @@ export default function ArenaPage() {
     onError: (modelId: ModelId, err: string) => void,
     onAllDone: () => void,
     onSources?: (modelId: ModelId, sources: { url: string; title?: string }[]) => void,
+    onUnsupported?: (modelId: ModelId) => void,
   ) {
     const reader = body.getReader();
     const decoder = new TextDecoder();
@@ -116,6 +119,7 @@ export default function ArenaPage() {
           }
           if (evt.model) {
             if (evt.kind === 'sources' && evt.sources) onSources?.(evt.model as ModelId, evt.sources);
+            else if (evt.unsupported)                  onUnsupported?.(evt.model as ModelId);
             else if (evt.token !== undefined)          onToken(evt.model as ModelId, evt.token, evt.kind);
             else if (evt.done)                         onDone(evt.model as ModelId);
             else if (evt.error)                        onError(evt.model as ModelId, evt.error);
@@ -185,7 +189,7 @@ export default function ArenaPage() {
 
   // ── submit ───────────────────────────────────────────────────────────────
 
-  const handleSubmit = useCallback(async (submittedQuery: string) => {
+  const handleSubmit = useCallback(async (submittedQuery: string, attachment?: Attachment) => {
     if (phase === 'running' || phase === 'synthesis') return;
 
     // Reset state
@@ -194,6 +198,7 @@ export default function ArenaPage() {
     setSynthesisStatus('idle');
     setSynthesisContent('');
     setQuery(submittedQuery);
+    setSubmittedAttachment(attachment ?? null);
     setPhase('running');
 
     // Mark all active models as processing
@@ -210,7 +215,7 @@ export default function ArenaPage() {
       const resp = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: submittedQuery, mode, models: activeIds, keys: readApiKeys(), roles: readRoles(), useRoles: readUseRoles(), grounding }),
+        body: JSON.stringify({ query: submittedQuery, mode, models: activeIds, keys: readApiKeys(), roles: readRoles(), useRoles: readUseRoles(), grounding, attachment }),
         signal: abortRef.current.signal,
       });
 
@@ -285,6 +290,11 @@ export default function ArenaPage() {
           finalStates[modelId] = { ...prev, sources: srcs };
           updatePanel(modelId, { sources: srcs });
         },
+        (modelId) => {
+          const prev = finalStates[modelId] ?? { status: 'processing' as PanelStatus, content: '' };
+          finalStates[modelId] = { ...prev, unsupported: true };
+          updatePanel(modelId, { unsupported: true });
+        },
       );
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
@@ -325,7 +335,7 @@ export default function ArenaPage() {
 
       {/* scroll area — padded for InputBar */}
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 120 }}>
-        <QueryBubble query={query} />
+        <QueryBubble query={query} attachment={submittedAttachment} />
 
         {query && (
           <PanelGrid states={panelStates} density={density} grounding={grounding} />

@@ -9,6 +9,8 @@ export interface ModelState {
   content: string;
   reasoning?: string;
   sources?: { url: string; title?: string }[];
+  /** Modelo não suporta a modalidade do anexo: respondeu só ao texto. */
+  unsupported?: boolean;
   error?: string;
 }
 
@@ -49,6 +51,7 @@ export function PanelGrid({ states, density, grounding }: PanelGridProps) {
                 content={state.content}
                 reasoning={state.reasoning}
                 sources={state.sources}
+                unsupported={state.unsupported}
                 grounding={grounding}
                 error={state.error}
               />

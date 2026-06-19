@@ -11,6 +11,7 @@ interface PanelProps {
   content: string;
   reasoning?: string;
   sources?: { url: string; title?: string }[];
+  unsupported?: boolean;
   grounding?: boolean;
   error?: string;
 }
@@ -106,7 +107,7 @@ function StatusBadge({ status }: { status: PanelStatus }) {
   );
 }
 
-export function Panel({ model, status, content, reasoning, sources, grounding, error }: PanelProps) {
+export function Panel({ model, status, content, reasoning, sources, unsupported, grounding, error }: PanelProps) {
   const wordCount = content ? content.trim().split(/\s+/).filter(Boolean).length : 0;
   const [showReasoning, setShowReasoning] = useState(false);
   useEffect(() => { setShowReasoning(readShowReasoningDefault()); }, []);
@@ -216,6 +217,17 @@ export function Panel({ model, status, content, reasoning, sources, grounding, e
         fontSize: 12.5, color: 'var(--cream)',
         lineHeight: 1.65, overflow: 'hidden',
       }}>
+        {unsupported && status !== 'idle' && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: 10.5, color: 'var(--fg-faint)',
+            background: 'var(--surface-3)', border: '0.5px solid var(--border)',
+            borderRadius: 5, padding: '5px 8px', marginBottom: 9, lineHeight: 1.4,
+          }}>
+            <span style={{ flexShrink: 0, fontSize: 11 }}>⚠</span>
+            sem suporte para este anexo — respondeu só ao texto
+          </div>
+        )}
         {status === 'idle' && (
           <span style={{ color: 'var(--fg-faint)', fontSize: 12 }}>Aguarda…</span>
         )}

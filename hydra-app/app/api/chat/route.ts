@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { orchestrate, type StreamToken } from '@/lib/orchestrator';
+import { orchestrate, type Attachment, type StreamToken } from '@/lib/orchestrator';
 import type { ApiKeys, ModelId, ModeId } from '@/lib/models';
 
 export const runtime = 'nodejs';
@@ -13,6 +13,7 @@ interface ChatRequest {
   roles?: Record<string, string>;
   useRoles?: boolean;
   grounding?: boolean;
+  attachment?: Attachment;
 }
 
 function encodeSSE(event: StreamToken): string {
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
     return new Response('Bad Request', { status: 400 });
   }
 
-  const { query, mode, models, keys, roles, useRoles, grounding } = body;
+  const { query, mode, models, keys, roles, useRoles, grounding, attachment } = body;
 
   if (!query || typeof query !== 'string' || query.trim().length === 0) {
     return new Response('query is required', { status: 400 });
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       try {
         await orchestrate(
-          { query, mode, models, keys: keys ?? {}, roles, useRoles: useRoles ?? true, grounding },
+          { query, mode, models, keys: keys ?? {}, roles, useRoles: useRoles ?? true, grounding, attachment },
           (event) => {
             controller.enqueue(encoder.encode(encodeSSE(event)));
           },

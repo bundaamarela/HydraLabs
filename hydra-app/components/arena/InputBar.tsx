@@ -3,13 +3,22 @@
 import { useState, useRef } from 'react';
 import { useApp } from '@/app/providers';
 import { type ModeId, MODE_LABELS } from '@/lib/models';
+import type { Attachment } from '@/lib/orchestrator';
 
 const QUICK_MODES: ModeId[] = ['rapido', 'raciocinio', 'pesquisa', 'investigacao'];
+
+function IconAttach() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M13 7l-5.5 5.5a3 3 0 0 1-4.2-4.2L8.5 3a2 2 0 0 1 2.8 2.8l-5.5 5.5a1 1 0 0 1-1.4-1.4L9.5 4.7" />
+    </svg>
+  );
+}
 
 interface InputBarProps {
   mode: ModeId;
   onModeSelect: (m: ModeId) => void;
-  onSubmit: (query: string) => void;
+  onSubmit: (query: string, attachment?: Attachment) => void;
   disabled: boolean;
   grounding: boolean;
   onGrounding: (v: boolean) => void;
@@ -19,12 +28,34 @@ export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, on
   const { sidebarW, notesW } = useApp();
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [attachment, setAttachment] = useState<Attachment | null>(null);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // permite reseleccionar o mesmo ficheiro
+    if (!file) return;
+    const isImage = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf';
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAttachment({
+        kind: isImage ? 'image' : isPdf ? 'pdf' : 'text',
+        data: String(reader.result ?? ''),
+        mediaType: file.type || 'text/plain',
+        name: file.name,
+      });
+    };
+    if (isImage || isPdf) reader.readAsDataURL(file);
+    else reader.readAsText(file);
+  };
 
   const handleSubmit = () => {
     const q = value.trim();
     if (!q || disabled) return;
-    onSubmit(q);
+    onSubmit(q, attachment ?? undefined);
     setValue('');
+    setAttachment(null);
     if (textareaRef.current) {
       textareaRef.current.style.height = '36px';
     }
@@ -99,6 +130,37 @@ export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, on
         </button>
       </div>
 
+      {/* attachment chip */}
+      {attachment && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 7,
+            background: 'var(--surface-3)', border: '0.5px solid var(--border)',
+            borderRadius: 6, padding: '3px 6px 3px 9px', fontSize: 11, color: 'var(--cream)',
+          }}>
+            <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '0.5px', color: 'var(--fg-muted)', textTransform: 'uppercase' }}>
+              {attachment.kind}
+            </span>
+            <span style={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {attachment.name}
+            </span>
+            <button
+              onClick={() => setAttachment(null)}
+              title="Remover anexo"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 16, height: 16, borderRadius: 4,
+                color: 'var(--fg-faint)', fontSize: 14, lineHeight: 1,
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--err)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--fg-faint)')}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* input row */}
       <div style={{
         display: 'flex', alignItems: 'flex-end', gap: 8,
@@ -107,6 +169,31 @@ export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, on
         borderRadius: 10, padding: '6px 8px',
         boxShadow: '0 -2px 16px rgba(0,0,0,0.25)',
       }}>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*,application/pdf,.txt,.md,text/plain,text/markdown"
+          onChange={handleFile}
+          style={{ display: 'none' }}
+        />
+        <button
+          onClick={() => fileRef.current?.click()}
+          disabled={disabled}
+          title="Anexar imagem, PDF ou texto"
+          style={{
+            flexShrink: 0, height: 32, width: 32,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'transparent', color: 'var(--fg-muted)',
+            border: '0.5px solid var(--border)', borderRadius: 7,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            opacity: disabled ? 0.5 : 1,
+            transition: 'color 0.12s, background 0.12s',
+          }}
+          onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.color = 'var(--cream)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--fg-muted)'; }}
+        >
+          <IconAttach />
+        </button>
         <textarea
           ref={textareaRef}
           value={value}

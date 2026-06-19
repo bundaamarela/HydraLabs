@@ -157,6 +157,24 @@ export const MODELS: ModelConfig[] = [
 
 export const ACTIVE_MODELS = MODELS.filter((m) => !m.disabled);
 
+/**
+ * Modalidades de anexo suportadas por modelo. Texto é sempre aceite (anexado ao
+ * prompt); imagem/PDF dependem do modelo. Quando não suportado, o orchestrator
+ * envia só o texto e marca o painel como `unsupported`.
+ */
+export const MODALITIES: Record<ModelId, { image: boolean; pdf: boolean }> = {
+  chatgpt:    { image: true,  pdf: true  },
+  grok:       { image: true,  pdf: false },
+  claude:     { image: true,  pdf: true  },
+  gemini:     { image: true,  pdf: true  },
+  deepseek:   { image: false, pdf: false },
+  kimi:       { image: true,  pdf: true  },
+  perplexity: { image: false, pdf: false },
+  mistral:    { image: false, pdf: false },
+  zai:        { image: false, pdf: false },
+  manus:      { image: false, pdf: false },
+};
+
 export function getModelById(id: ModelId): ModelConfig | undefined {
   return MODELS.find((m) => m.id === id);
 }
