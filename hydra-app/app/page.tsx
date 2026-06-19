@@ -10,6 +10,7 @@ import { PanelGrid, type ModelState, type CrossExamTurn } from '@/components/are
 import { ModeSelector } from '@/components/arena/ModeSelector';
 import { InputBar, type InputBarHandle } from '@/components/arena/InputBar';
 import { ArenaEmpty } from '@/components/arena/ArenaEmpty';
+import { PastTurn, type ConvTurn } from '@/components/arena/PastTurns';
 import { SynthesisPanel } from '@/components/arena/SynthesisPanel';
 import type { PanelStatus } from '@/components/arena/Panel';
 import type { ApiKeys } from '@/lib/models';
@@ -55,7 +56,7 @@ function readUseRoles(): boolean {
 }
 
 export default function ArenaPage() {
-  const { activeSessionId, setActiveSessionId, pendingSessionId, clearPendingSession, openSession } = useApp();
+  const { activeSessionId, setActiveSessionId, pendingSessionId, clearPendingSession, openSession, isMobile } = useApp();
 
   const [query, setQuery]         = useState('');
   const [mode, setMode]           = useState<ModeId>('raciocinio');
@@ -69,8 +70,10 @@ export default function ArenaPage() {
   const [phase, setPhase]         = useState<ArenaPhase>('idle');
   const [synthesisStatus, setSynthesisStatus] = useState<PanelStatus>('idle');
   const [synthesisContent, setSynthesisContent] = useState('');
+  const [pastTurns, setPastTurns] = useState<ConvTurn[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const inputBarRef = useRef<InputBarHandle>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Densidade inicial da grelha vem do preset de aparência (hydra_theme).
   useEffect(() => { setDensity(densityToGrid(readTheme().density)); }, []);
@@ -127,6 +130,7 @@ export default function ArenaPage() {
 
         abortRef.current?.abort(); // pára qualquer stream em curso
 
+        setPastTurns([]); // a sessão reaberta passa a ser a ronda actual
         setPanelStates(states);
         setRoundModels(ids.length ? ids : ACTIVE_MODELS.map((m) => m.id));
         setQuery(d.query);
@@ -141,6 +145,26 @@ export default function ArenaPage() {
     })();
     return () => { cancelled = true; };
   }, [pendingSessionId, clearPendingSession, setActiveSessionId]);
+
+  // Recomeça do zero: limpa o histórico da conversa e a ronda atual.
+  const handleNewConversation = useCallback(() => {
+    abortRef.current?.abort();
+    setPastTurns([]);
+    setPanelStates(INITIAL_STATES());
+    setQuery('');
+    setSubmittedAttachment(null);
+    setSynthesisContent('');
+    setSynthesisStatus('idle');
+    setPhase('idle');
+    setActiveSessionId(null);
+  }, [setActiveSessionId]);
+
+  // Multi-turno: ao iniciar uma ronda, rola para o fundo (mostra a nova pergunta).
+  useEffect(() => {
+    if (phase === 'running' && scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [phase]);
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -267,6 +291,20 @@ export default function ArenaPage() {
   const handleSubmit = useCallback(async (submittedQuery: string, attachment?: Attachment) => {
     if (phase === 'running' || phase === 'synthesis') return;
 
+    // Multi-turno: arquiva a ronda concluída atual como turno anterior e monta o
+    // histórico a enviar (vazio na 1.ª pergunta → idêntico a turno único).
+    const archivedAnswers: Partial<Record<ModelId, string>> = {};
+    if (query && phase === 'done') {
+      for (const id of roundModels) {
+        const st = panelStates[id];
+        if (st?.status === 'done' && st.content) archivedAnswers[id] = st.content;
+      }
+    }
+    const history: ConvTurn[] = Object.keys(archivedAnswers).length
+      ? [...pastTurns, { query, answers: archivedAnswers }]
+      : pastTurns;
+    setPastTurns(history);
+
     // Reset state
     const fresh = INITIAL_STATES();
     setPanelStates(fresh);
@@ -291,7 +329,7 @@ export default function ArenaPage() {
       const resp = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: submittedQuery, mode, models: activeIds, keys: readApiKeys(), roles: readRoles(), useRoles: readUseRoles(), grounding, attachment }),
+        body: JSON.stringify({ query: submittedQuery, mode, models: activeIds, keys: readApiKeys(), roles: readRoles(), useRoles: readUseRoles(), grounding, attachment, history }),
         signal: abortRef.current.signal,
       });
 
@@ -387,7 +425,7 @@ export default function ArenaPage() {
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, mode, grounding, selectedModels, updatePanel, setActiveSessionId]);
+  }, [phase, mode, grounding, selectedModels, updatePanel, setActiveSessionId, query, pastTurns, roundModels, panelStates]);
 
   // Selecção de modo. Consolidação combina com pesquisa web — sugere (não força)
   // grounding ON; o utilizador pode desligar a seguir.
@@ -544,6 +582,24 @@ export default function ArenaPage() {
       }
       actions={
         <>
+          {(pastTurns.length > 0 || query) && (
+            <button
+              onClick={handleNewConversation}
+              title="Começar uma conversa nova"
+              style={{
+                fontSize: 11, fontWeight: 600, letterSpacing: '0.3px',
+                color: 'var(--fg-muted)',
+                background: 'var(--surface-3)',
+                border: '0.5px solid var(--border)',
+                borderRadius: 5, padding: '4px 9px', cursor: 'pointer',
+                transition: 'color 0.12s',
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--cream)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--fg-muted)'; }}
+            >
+              + Nova
+            </button>
+          )}
           {(processingCount > 0 || doneCount > 0) && (
             <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>
               {processingCount > 0 && `${processingCount} a processar · `}
@@ -577,8 +633,11 @@ export default function ArenaPage() {
         </>
       }
     >
-      {/* área que rola — resultados / síntese / estado vazio */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+      {/* área que rola — histórico + ronda atual + síntese / estado vazio */}
+      <div ref={scrollRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        {pastTurns.map((t, i) => (
+          <PastTurn key={i} turn={t} density={density} isMobile={isMobile} />
+        ))}
         <QueryBubble query={query} attachment={submittedAttachment} />
 
         {query && (

@@ -16,6 +16,7 @@ interface ChatRequest {
   useRoles?: boolean;
   grounding?: boolean;
   attachment?: Attachment;
+  history?: { query: string; answers: Record<string, string> }[];
 }
 
 function encodeSSE(event: StreamToken): string {
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
     return new Response('Bad Request', { status: 400 });
   }
 
-  const { query, mode, models, keys, roles, useRoles, grounding, attachment } = body;
+  const { query, mode, models, keys, roles, useRoles, grounding, attachment, history } = body;
 
   if (!query || typeof query !== 'string' || query.trim().length === 0) {
     return new Response('query is required', { status: 400 });
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       try {
         await orchestrate(
-          { query, mode, models, keys: keys ?? {}, roles, useRoles: useRoles ?? true, grounding, attachment },
+          { query, mode, models, keys: keys ?? {}, roles, useRoles: useRoles ?? true, grounding, attachment, history },
           (event) => {
             controller.enqueue(encoder.encode(encodeSSE(event)));
           },

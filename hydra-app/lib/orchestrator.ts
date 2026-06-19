@@ -1,4 +1,4 @@
-import { streamText, type JSONValue } from 'ai';
+import { streamText, type JSONValue, type CoreMessage } from 'ai';
 import { MODELS, MODALITIES, MODE_MAX_TOKENS, SYSTEM_PROMPTS, type ApiKeys, type ModelId, type ModeId } from './models';
 
 export interface SourceRef {
@@ -41,6 +41,11 @@ export interface OrchestrateOptions {
   attachment?: Attachment;
   /** Substitui o prompt de sistema do modo (ex.: cross-examination). */
   system?: string;
+  /**
+   * Histórico multi-turno: turnos anteriores (pergunta + resposta por modelo).
+   * Vazio/ausente → comportamento idêntico ao de turno único.
+   */
+  history?: { query: string; answers: Record<string, string> }[];
 }
 
 // Conteúdo da mensagem de utilizador: string simples ou partes multimodais.
@@ -193,10 +198,24 @@ export async function orchestrate(
         const model = modelConfig.getModel(keys, { grounding });
         modelLabel = model.modelId || modelConfig.name;
 
+        // Multi-turno: junta os turnos anteriores DESTE modelo (só onde ele
+        // respondeu, para preservar a alternância user/assistant que os providers
+        // exigem). Anexo (imagem/PDF) entra apenas no turno actual.
+        const prior: CoreMessage[] = (opts.history ?? []).flatMap((t) => {
+          const a = t.answers[modelConfig.id];
+          return a
+            ? ([
+                { role: 'user', content: t.query },
+                { role: 'assistant', content: a },
+              ] as CoreMessage[])
+            : [];
+        });
+        const messages: CoreMessage[] = [...prior, { role: 'user', content }];
+
         const result = streamText({
           model,
           system,
-          messages: [{ role: 'user', content }],
+          messages,
           providerOptions: buildProviderOptions(modelConfig.id, grounding, mode),
           maxTokens: MODE_MAX_TOKENS[mode],
           abortSignal: ac.signal,
