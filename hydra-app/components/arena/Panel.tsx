@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import {
   ACTIVE_MODELS, CROSS_ACTIONS, crossExamTag, getModelById,
   MODEL_ACCENTS, MODEL_CAPABILITIES,
@@ -149,6 +149,11 @@ function renderInline(text: string, kp: string): ReactNode[] {
 // código inline, negrito/itálico e links. Cobre o que os modelos produzem e o
 // que a síntese gera (## CONSENSO / ## DIVERGÊNCIA / ## INSIGHT).
 export function SimpleMarkdown({ text }: { text: string }) {
+  // Memoiza o parse por `text`: durante o streaming, um token de UM modelo deixa
+  // de forçar reparse do markdown de TODOS os painéis (corta a cascata de
+  // re-renders responsável pela lentidão/engasgo). Painéis cujo texto não mudou
+  // reutilizam os mesmos nós → o React também salta a reconciliação dessa subárvore.
+  const blocks = useMemo<ReactNode[]>(() => {
   const lines = text.split('\n');
   const blocks: ReactNode[] = [];
   let i = 0, key = 0;
@@ -218,6 +223,9 @@ export function SimpleMarkdown({ text }: { text: string }) {
       </p>,
     );
   }
+
+  return blocks;
+  }, [text]);
 
   return <>{blocks}</>;
 }
