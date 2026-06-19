@@ -36,6 +36,8 @@ interface PanelProps {
   onCrossExam?: (targetModel: ModelId, action: CrossAction) => void;
   /** Re-dispara apenas este modelo com a mesma pergunta/modo/papéis/grounding. */
   onRegenerate?: () => void;
+  /** Vista maximizada (modo foco): painel ocupa o ecrã. */
+  focused?: boolean;
 }
 
 // Default global de mostrar/ocultar raciocínio (hydra_prefs.showReasoning).
@@ -220,7 +222,7 @@ function CrossExamTurnView({ turn }: { turn: CrossExamTurn }) {
   );
 }
 
-export function Panel({ model, status, content, reasoning, sources, unsupported, crossExams, crossTargetIds, grounding, error, onCrossExam, onRegenerate }: PanelProps) {
+export function Panel({ model, status, content, reasoning, sources, unsupported, crossExams, crossTargetIds, grounding, error, onCrossExam, onRegenerate, focused }: PanelProps) {
   const [crossOpen, setCrossOpen] = useState(false);
   const [crossTarget, setCrossTarget] = useState<ModelId | null>(null);
   const crossTargets = (
@@ -298,7 +300,7 @@ export function Panel({ model, status, content, reasoning, sources, unsupported,
       borderLeft: `2.5px solid ${accent}`,
       borderRadius: 10,
       display: 'flex', flexDirection: 'column',
-      minHeight: 180,
+      minHeight: focused ? 'calc(100vh - 230px)' : 180,
     }}>
       {/* header */}
       <div style={{
