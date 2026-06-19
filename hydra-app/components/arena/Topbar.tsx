@@ -1,6 +1,7 @@
 'use client';
 
 import { ModeId, MODE_LABELS } from '@/lib/models';
+import { useApp } from '@/app/providers';
 
 interface TopbarProps {
   mode: ModeId;
@@ -12,12 +13,13 @@ interface TopbarProps {
 }
 
 export function Topbar({ mode, onModeClick, processingCount, doneCount, density, onDensity }: TopbarProps) {
+  const { isMobile } = useApp();
   return (
     <div style={{
       position: 'sticky', top: 0, zIndex: 10,
       height: 48,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 16px',
+      padding: isMobile ? '0 16px 0 52px' : '0 16px',
       background: 'var(--surface-2)',
       borderBottom: '0.5px solid var(--border)',
       flexShrink: 0,

@@ -85,7 +85,7 @@ export function NotesPanel() {
       <aside
         style={{
           position: 'fixed', right: 0, top: 0,
-          width: 280, height: '100vh',
+          width: 'min(280px, 85vw)', height: '100dvh',
           background: 'var(--surface-2)',
           borderLeft: '0.5px solid var(--border)',
           display: 'flex', flexDirection: 'column',

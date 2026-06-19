@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApp } from '@/app/providers';
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -227,7 +226,6 @@ function WorkspaceCard({ ws }: { ws: WorkspaceItem }) {
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function WorkspacePage() {
-  const { sidebarW } = useApp();
   const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
   const [loading, setLoading]       = useState(true);
   const [showModal, setShowModal]   = useState(false);
@@ -241,11 +239,9 @@ export default function WorkspacePage() {
 
   return (
     <main style={{
-      marginLeft: sidebarW,
-      minHeight: '100vh',
+      minHeight: '100dvh',
       padding: '32px 32px 64px',
-      transition: 'margin-left 0.2s ease',
-      maxWidth: 1100 + sidebarW,
+      maxWidth: 1100,
     }}>
 
       {/* header */}
@@ -292,7 +288,7 @@ export default function WorkspacePage() {
 
       {/* loading */}
       {loading && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))', gap: 12 }}>
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} style={{ background: 'var(--surface-2)', border: '0.5px solid var(--border)', borderRadius: 10, height: 110, opacity: 0.5, animation: `panelIn 0.2s ease ${i * 0.06}s both` }} />
           ))}
@@ -301,7 +297,7 @@ export default function WorkspacePage() {
 
       {/* grid */}
       {!loading && workspaces.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))', gap: 12 }}>
           {workspaces.map((ws) => <WorkspaceCard key={ws.id} ws={ws} />)}
         </div>
       )}

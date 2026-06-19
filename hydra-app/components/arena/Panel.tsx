@@ -300,7 +300,7 @@ export function Panel({ model, status, content, reasoning, sources, unsupported,
       borderLeft: `2.5px solid ${accent}`,
       borderRadius: 10,
       display: 'flex', flexDirection: 'column',
-      minHeight: focused ? 'calc(100vh - 230px)' : 180,
+      minHeight: focused ? 'calc(100dvh - 230px)' : 180,
     }}>
       {/* header */}
       <div style={{

@@ -603,8 +603,7 @@ function SessionRow({ session, onDelete }: {
 // ── main page ─────────────────────────────────────────────────────────────────
 
 export default function LibraryPage() {
-  const { sidebarW } = useApp();
-
+  const { isMobile } = useApp();
   const [sessions, setSessions]     = useState<SessionItem[]>([]);
   const [projects, setProjects]     = useState<ProjectItem[]>([]);
   const [loading, setLoading]       = useState(true);
@@ -673,21 +672,21 @@ export default function LibraryPage() {
 
   return (
     <div style={{
-      marginLeft: sidebarW,
-      minHeight: '100vh',
+      minHeight: '100dvh',
       display: 'flex',
-      transition: 'margin-left 0.2s ease',
     }}>
-      {/* ── project sidebar ── */}
-      <ProjectSidebar
-        projects={projects}
-        selected={projectFilter}
-        onSelect={setProjectFilter}
-        totalCount={allCount}
-      />
+      {/* ── project sidebar (hidden on mobile to free width) ── */}
+      {!isMobile && (
+        <ProjectSidebar
+          projects={projects}
+          selected={projectFilter}
+          onSelect={setProjectFilter}
+          totalCount={allCount}
+        />
+      )}
 
       {/* ── main content ── */}
-      <main style={{ flex: 1, padding: '32px 32px 64px', minWidth: 0 }}>
+      <main style={{ flex: 1, padding: isMobile ? '8px 16px 64px' : '32px 32px 64px', minWidth: 0 }}>
 
         {/* header */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24 }}>
@@ -788,7 +787,7 @@ export default function LibraryPage() {
 
         {/* loading skeleton */}
         {loading && (
-          <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(280px, 1fr))' : '1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' : '1fr', gap: 12 }}>
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} style={{
                 background: 'var(--surface-2)', border: '0.5px solid var(--border)',
@@ -801,7 +800,7 @@ export default function LibraryPage() {
 
         {/* grid view */}
         {!loading && sessions.length > 0 && viewMode === 'grid' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', gap: 12 }}>
             {sessions.map((s, i) => (
               <div key={s.id} style={{ animationDelay: `${i * 0.04}s` }}>
                 <SessionCard session={s} onDelete={(id, title) => setDeleteTarget({ id, title })} />

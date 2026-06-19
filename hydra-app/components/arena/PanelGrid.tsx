@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties, type DragEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useApp } from '@/app/providers';
 import { getModelById, MODEL_ACCENTS, type CrossAction, type ModelConfig, type ModelId } from '@/lib/models';
 import { Panel, type PanelStatus, type CrossExamTurn } from './Panel';
 
@@ -252,6 +253,7 @@ function PanelCell(p: CellProps) {
 }
 
 export function PanelGrid({ states, models, density, grounding, onCrossExam, onRegenerate }: PanelGridProps) {
+  const { isMobile } = useApp();
   const [layout, setLayout] = useState<Layout>(EMPTY_LAYOUT);
   const [focused, setFocused] = useState<ModelId | null>(null);
   const [dragging, setDragging] = useState<ModelId | null>(null);
@@ -276,7 +278,8 @@ export function PanelGrid({ states, models, density, grounding, onCrossExam, onR
   const ordered = orderIds(models, layout);
   const configs = ordered.map((id) => getModelById(id)).filter((m): m is ModelConfig => !!m);
   const visible = focused ? configs.filter((m) => m.id === focused) : configs;
-  const cols = focused ? 1 : Math.min(density, Math.max(visible.length, 1));
+  // Mobile shows a single column — multi-column would squeeze panels unusably.
+  const cols = (focused || isMobile) ? 1 : Math.min(density, Math.max(visible.length, 1));
 
   const handleDrop = (targetId: ModelId) => {
     const src = dragging;
@@ -294,7 +297,7 @@ export function PanelGrid({ states, models, density, grounding, onCrossExam, onR
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: `repeat(${cols}, 1fr)`,
+      gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
       gap: 10,
       padding: '12px 16px',
     }}>

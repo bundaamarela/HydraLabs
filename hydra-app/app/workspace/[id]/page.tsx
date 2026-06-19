@@ -584,12 +584,14 @@ function SessionRefBlock({
 // ── left toolbar ──────────────────────────────────────────────────────────────
 
 function LeftToolbar({ onAdd }: { onAdd: (t: BlockType) => void }) {
+  const { contentOffset } = useApp();
   const [tooltip, setTooltip] = useState<string | null>(null);
 
   return (
     <div style={{
-      position: 'fixed', left: 0, top: '50%', transform: 'translateY(-50%)',
+      position: 'fixed', left: contentOffset, top: '50%', transform: 'translateY(-50%)',
       width: 40, zIndex: 50,
+      transition: 'left 0.2s ease',
       display: 'flex', flexDirection: 'column', gap: 2,
       padding: '8px 4px',
       background: 'var(--surface-2)',
@@ -641,7 +643,6 @@ function LeftToolbar({ onAdd }: { onAdd: (t: BlockType) => void }) {
 // ── main editor ───────────────────────────────────────────────────────────────
 
 export default function WorkspaceEditorPage() {
-  const { sidebarW } = useApp();
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
 
@@ -837,7 +838,7 @@ export default function WorkspaceEditorPage() {
 
   if (!workspace) {
     return (
-      <div style={{ marginLeft: sidebarW + 40, padding: 32, color: 'var(--fg-muted)', fontSize: 13 }}>
+      <div style={{ marginLeft: 40, padding: 32, color: 'var(--fg-muted)', fontSize: 13 }}>
         A carregar workspace…
       </div>
     );
@@ -851,12 +852,10 @@ export default function WorkspaceEditorPage() {
       <LeftToolbar onAdd={(t) => addBlock(t)} />
 
       <main style={{
-        marginLeft: sidebarW + 40,
-        minHeight: '100vh',
+        minHeight: '100dvh',
         paddingBottom: 80,
         maxWidth: 780,
-        margin: `0 auto 0 ${sidebarW + 40}px`,
-        transition: 'margin-left 0.2s ease',
+        margin: '0 auto 0 40px',
       }}>
 
         {/* ── header ── */}

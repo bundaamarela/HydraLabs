@@ -28,7 +28,7 @@ interface InputBarProps {
 }
 
 export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, onGrounding, selectedModels, onToggleModel }: InputBarProps) {
-  const { sidebarW, notesW } = useApp();
+  const { contentOffset, notesW } = useApp();
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -97,7 +97,7 @@ export function InputBar({ mode, onModeSelect, onSubmit, disabled, grounding, on
   return (
     <div style={{
       position: 'fixed', bottom: 0, zIndex: 20,
-      left: sidebarW, right: notesW,
+      left: contentOffset, right: notesW,
       transition: 'left 0.2s ease, right 0.2s ease',
       padding: '0 16px 16px',
     }}>

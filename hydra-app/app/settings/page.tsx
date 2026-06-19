@@ -282,7 +282,7 @@ function ToggleRow({ label, description, checked, onChange }: {
 // ── main page ─────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
-  const { sidebarW, theme, toggleTheme } = useApp();
+  const { theme, toggleTheme } = useApp();
 
   const [keys, setKeys] = useState<ApiKeys>({});
   const [saved, setSaved] = useState(false);
@@ -356,11 +356,9 @@ export default function SettingsPage() {
 
   return (
     <main style={{
-      marginLeft: sidebarW,
-      minHeight: '100vh',
+      minHeight: '100dvh',
       padding: '32px 32px 80px',
-      transition: 'margin-left 0.2s ease',
-      maxWidth: 760 + sidebarW,
+      maxWidth: 760,
     }}>
 
       {/* ── header ── */}

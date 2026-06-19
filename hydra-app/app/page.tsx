@@ -54,7 +54,7 @@ function readUseRoles(): boolean {
 }
 
 export default function ArenaPage() {
-  const { sidebarW, notesW, activeSessionId, setActiveSessionId } = useApp();
+  const { activeSessionId, setActiveSessionId } = useApp();
 
   const [query, setQuery]         = useState('');
   const [mode, setMode]           = useState<ModeId>('raciocinio');
@@ -446,7 +446,7 @@ export default function ArenaPage() {
   const isRunning = phase === 'running' || phase === 'synthesis';
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       <Topbar
         mode={mode}
         onModeClick={() => setModeSelectorOpen((o) => !o)}
@@ -485,7 +485,7 @@ export default function ArenaPage() {
         {!query && (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            minHeight: 'calc(100vh - 120px)',
+            minHeight: 'calc(100dvh - 120px)',
             flexDirection: 'column', gap: 12,
           }}>
             <div style={{

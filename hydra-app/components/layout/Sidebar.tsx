@@ -137,7 +137,7 @@ const NAV = [
 const s: Record<string, React.CSSProperties> = {
   sidebar: {
     position: 'fixed', left: 0, top: 0,
-    height: '100vh', zIndex: 40,
+    height: '100dvh', zIndex: 40,
     background: 'var(--surface-2)',
     borderRight: '0.5px solid var(--border)',
     display: 'flex', flexDirection: 'column',
@@ -181,9 +181,20 @@ const s: Record<string, React.CSSProperties> = {
     letterSpacing: '-0.1px',
   },
   historyWrap: {
-    flex: 1, overflowY: 'auto',
+    flex: 1, minHeight: 0, overflowY: 'auto',
     padding: '4px 8px 10px',
     scrollbarWidth: 'none' as const,
+  },
+  resizeHandle: {
+    position: 'absolute', top: 0, right: 0,
+    width: 6, height: '100%',
+    cursor: 'col-resize', zIndex: 50,
+    background: 'transparent',
+  },
+  resizeLine: {
+    position: 'absolute', top: 0, right: 0,
+    width: 1, height: '100%',
+    transition: 'background 0.12s',
   },
   groupLabel: {
     fontSize: 9, fontWeight: 500,
@@ -228,12 +239,17 @@ const s: Record<string, React.CSSProperties> = {
 };
 
 export function Sidebar() {
-  const { sidebarCollapsed, sidebarW, toggleSidebar, toggleTheme, theme } = useApp();
+  const {
+    sidebarCollapsed, sidebarW, sidebarDefault,
+    toggleSidebar, toggleTheme, theme, setSidebarWidth,
+    isMobile, mobileNavOpen, closeMobileNav,
+  } = useApp();
   const pathname = usePathname();
   const router   = useRouter();
 
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [hovered, setHovered] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
     fetch('/api/sessions')
@@ -241,6 +257,23 @@ export function Sidebar() {
       .then(setSessions)
       .catch(() => {});
   }, []);
+
+  // drag-to-resize: sidebar is fixed at left:0, so width === pointer X
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e: MouseEvent) => setSidebarWidth(e.clientX);
+    const onUp   = () => setDragging(false);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [dragging, setSidebarWidth]);
 
   const groups = groupByDate(sessions);
   const groupEntries: [string, string, SessionItem[]][] = [
@@ -252,10 +285,25 @@ export function Sidebar() {
   const collapsed = sidebarCollapsed;
 
   return (
-    <aside style={{ ...s.sidebar, width: sidebarW }}>
+    <aside
+      style={{
+        ...s.sidebar,
+        width: sidebarW,
+        zIndex: isMobile ? 45 : 40,
+        transform: isMobile && !mobileNavOpen ? 'translateX(-100%)' : 'translateX(0)',
+        boxShadow: isMobile && mobileNavOpen ? '0 0 40px rgba(0,0,0,0.5)' : 'none',
+        transition: isMobile
+          ? 'transform 0.2s ease'
+          : (dragging ? 'none' : s.sidebar.transition),
+      }}
+    >
 
       {/* brand */}
-      <div style={s.brand} onClick={toggleSidebar} title={collapsed ? 'Expandir' : 'Recolher'}>
+      <div
+        style={s.brand}
+        onClick={isMobile ? closeMobileNav : toggleSidebar}
+        title={isMobile ? 'Fechar' : collapsed ? 'Expandir' : 'Recolher'}
+      >
         <div style={s.mark}>HL</div>
         {!collapsed && <span style={s.brandLabel}>Hydra Labs</span>}
       </div>
@@ -276,6 +324,7 @@ export function Sidebar() {
               }}
               onMouseEnter={() => setHovered(href)}
               onMouseLeave={() => setHovered(null)}
+              onClick={() => { if (isMobile) closeMobileNav(); }}
             >
               <span style={{ flexShrink: 0 }}><Icon /></span>
               {!collapsed && label}
@@ -300,7 +349,7 @@ export function Sidebar() {
                     }}
                     onMouseEnter={() => setHovered(item.id)}
                     onMouseLeave={() => setHovered(null)}
-                    onClick={() => router.push('/')}
+                    onClick={() => { router.push('/'); if (isMobile) closeMobileNav(); }}
                     title={item.title}
                   >
                     <div style={s.historyTitle}>{item.title}</div>
@@ -347,7 +396,7 @@ export function Sidebar() {
             justifyContent: collapsed ? 'center' : 'flex-start',
             padding: collapsed ? '0' : '0 9px',
           }}
-          onClick={toggleSidebar}
+          onClick={isMobile ? closeMobileNav : toggleSidebar}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.background = 'var(--surface-3)';
             (e.currentTarget as HTMLElement).style.color = 'var(--cream)';
@@ -357,12 +406,33 @@ export function Sidebar() {
             (e.currentTarget as HTMLElement).style.color = 'var(--fg-muted)';
           }}
         >
-          {collapsed ? <IconChevronRight /> : <IconChevronLeft />}
+          {isMobile ? <IconChevronLeft /> : collapsed ? <IconChevronRight /> : <IconChevronLeft />}
           {!collapsed && (
-            <span style={{ fontSize: 12, fontWeight: 500 }}>Recolher</span>
+            <span style={{ fontSize: 12, fontWeight: 500 }}>{isMobile ? 'Fechar' : 'Recolher'}</span>
           )}
         </button>
       </div>
+
+      {/* drag-to-resize handle (only when expanded, desktop only) */}
+      {!collapsed && !isMobile && (
+        <div
+          style={s.resizeHandle}
+          onMouseDown={(e) => { e.preventDefault(); setDragging(true); }}
+          onDoubleClick={() => setSidebarWidth(sidebarDefault)}
+          onMouseEnter={(e) => {
+            const line = e.currentTarget.firstElementChild as HTMLElement | null;
+            if (line) line.style.background = 'var(--cream)';
+          }}
+          onMouseLeave={(e) => {
+            if (dragging) return;
+            const line = e.currentTarget.firstElementChild as HTMLElement | null;
+            if (line) line.style.background = 'transparent';
+          }}
+          title="Arraste para redimensionar · duplo-clique para repor"
+        >
+          <div style={{ ...s.resizeLine, background: dragging ? 'var(--cream)' : 'transparent' }} />
+        </div>
+      )}
 
     </aside>
   );
