@@ -16,10 +16,9 @@ const SERIF    = "Georgia, 'Iowan Old Style', 'Times New Roman', serif";
 const MONO     = "ui-monospace, 'SF Mono', Menlo, Consolas, monospace";
 const HUMANIST = "'Segoe UI', Roboto, system-ui, 'Helvetica Neue', sans-serif";
 
-/** Acentos curados (matizes contidas e harmoniosas) + hex personalizado. */
+/** Acentos curados em escala de cinzentos (tema preto/branco) + hex personalizado. */
 export const ACCENT_SWATCHES = [
-  '#7A9A6A', '#C28E5E', '#7C93C9', '#A87FB0',
-  '#6E78B8', '#5FA39A', '#C0705A', '#8893A8',
+  '#FFFFFF', '#D0D0D0', '#9A9A9A', '#6E6E6E', '#4A4A4A', '#2B2B2B',
 ];
 
 export interface FontPairing {
@@ -46,7 +45,7 @@ export const DENSITIES: { id: Density; label: string }[] = [
 ];
 
 export const DEFAULT_THEME: ThemeCfg = {
-  accent: '#7A9A6A',
+  accent: '#9A9A9A',
   pairing: 'sistema',
   fontUi: SANS,
   fontRead: SANS,

@@ -7,22 +7,22 @@
    ══════════════════════════════════════════════════════════════ */
 
 :root {
-  /* dark (default) */
-  --surface:   #0C0B09;
-  --surface-2: #161410;
-  --surface-3: #1E1C18;
-  --border:    #2A2824;
-  --cream:     #F4EFE3;
-  --cream-2:   #EAE4D6;
-  --ink:       #1A1714;
-  --ink-2:     #3A3530;
-  --fg-muted:  #7A756E;
-  --fg-faint:  #4A4840;
+  /* dark (default) — preto puro · branco puro, escala de cinzentos neutra */
+  --surface:   #000000;
+  --surface-2: #0D0D0D;
+  --surface-3: #1A1A1A;
+  --border:    #2B2B2B;
+  --cream:     #FFFFFF;
+  --cream-2:   #E6E6E6;
+  --ink:       #000000;
+  --ink-2:     #2B2B2B;
+  --fg-muted:  #8C8C8C;
+  --fg-faint:  #565656;
   --ok:        #7A9A6A;
   --err:       #C0705A;
 
   /* tema personalizável (sobreposto em runtime a partir de hydra_theme) */
-  --accent:    #7A9A6A;
+  --accent:    #9A9A9A;
   --font-ui:   -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   --font-read: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
 
@@ -31,16 +31,17 @@
 }
 
 [data-theme='light'] {
-  --surface:   #F4EFE3;
-  --surface-2: #EAE4D6;
-  --surface-3: #DDD8CC;
-  --border:    #C8C2B4;
-  --cream:     #0C0B09;
-  --cream-2:   #161410;
-  --ink:       #F4EFE3;
-  --ink-2:     #D8D2C4;
-  --fg-muted:  #8A8478;
-  --fg-faint:  #9A948A;
+  /* light — branco puro · preto puro */
+  --surface:   #FFFFFF;
+  --surface-2: #F2F2F2;
+  --surface-3: #E6E6E6;
+  --border:    #D2D2D2;
+  --cream:     #000000;
+  --cream-2:   #1A1A1A;
+  --ink:       #FFFFFF;
+  --ink-2:     #D2D2D2;
+  --fg-muted:  #6E6E6E;
+  --fg-faint:  #9C9C9C;
   --ok:        #4F7A40;
   --err:       #A04040;
 }
@@ -54,6 +55,7 @@ body {
   font-family: var(--font-ui);
   font-size: 13px;
   line-height: 1.5;
+  zoom: 1.1; /* letras ~10% maiores (escala global uniforme) */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   letter-spacing: -0.1px;

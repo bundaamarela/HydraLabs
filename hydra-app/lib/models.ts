@@ -187,17 +187,19 @@ export const MODALITIES: Record<ModelId, { image: boolean; pdf: boolean }> = {
  * harmoniosa (uma matiz por modelo), distinguível sem ser berrante; usada em
  * borda/badge e legível em claro e escuro.
  */
+// Identidade por painel em escala de cinzentos (tema preto/branco puro). Cada
+// modelo tem uma luminosidade distinta; a sigla no badge reforça a identidade.
 export const MODEL_ACCENTS: Record<ModelId, string> = {
-  chatgpt:    '#6FA287', // sálvia
-  grok:       '#8893A8', // ardósia
-  claude:     '#C28E5E', // âmbar/argila
-  gemini:     '#7C93C9', // azul suave
-  deepseek:   '#6E78B8', // índigo
-  kimi:       '#A87FB0', // violeta
-  perplexity: '#5FA39A', // teal
-  mistral:    '#C97A54', // telha
-  zai:        '#8A86C0', // lilás
-  manus:      '#8893A8', // ardósia
+  chatgpt:    '#D0D0D0',
+  grok:       '#8A8A8A',
+  claude:     '#BEBEBE',
+  gemini:     '#9E9E9E',
+  deepseek:   '#747474',
+  kimi:       '#C8C8C8',
+  perplexity: '#808080',
+  mistral:    '#B0B0B0',
+  zai:        '#909090',
+  manus:      '#A0A0A0',
 };
 
 export interface ModelCapabilities {

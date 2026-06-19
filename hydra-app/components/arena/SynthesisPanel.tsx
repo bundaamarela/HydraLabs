@@ -15,9 +15,9 @@ interface SynthesisBlock {
 }
 
 const BLOCK_COLORS: Record<string, { border: string; label: string }> = {
-  CONSENSO:    { border: 'var(--ok)', label: 'Consenso'    },
-  DIVERGÊNCIA: { border: '#C0A050',  label: 'Divergência'  },
-  INSIGHT:     { border: '#5A7AB0',  label: 'Insight'      },
+  CONSENSO:    { border: 'var(--cream)',    label: 'Consenso'    },
+  DIVERGÊNCIA: { border: 'var(--fg-muted)', label: 'Divergência' },
+  INSIGHT:     { border: 'var(--fg-faint)', label: 'Insight'     },
 };
 
 function parseSynthesis(text: string): SynthesisBlock[] {

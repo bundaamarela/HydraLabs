@@ -507,11 +507,11 @@ function InsightBlock({ block, onSave }: { block: Block; onSave: (c: string) => 
   return (
     <div style={{
       background: 'var(--surface-2)',
-      borderLeft: '3px solid #F59E0B',
+      borderLeft: '3px solid var(--fg-muted)',
       borderRadius: '0 6px 6px 0',
       padding: '12px 16px',
     }}>
-      <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.6px', color: '#F59E0B', textTransform: 'uppercase', marginBottom: 6 }}>
+      <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.6px', color: 'var(--fg-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
         Insight
       </div>
       <EditableDiv
