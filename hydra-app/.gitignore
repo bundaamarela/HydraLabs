@@ -5,6 +5,9 @@ node_modules/
 .next/
 out/
 
+# typescript build cache (não versionar — muda a cada build)
+*.tsbuildinfo
+
 # env (never commit keys)
 .env
 .env.local
