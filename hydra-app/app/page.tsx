@@ -101,20 +101,40 @@ export default function ArenaPage() {
         if (!r.ok) return;
         const d = (await r.json()) as {
           query: string; mode: string; synthesis?: string | null;
+          turns?: unknown;
           responses?: { model: string; content: string; reasoning?: string | null }[];
           crossExams?: { sourceModel: string; targetModel: string; action: string; content: string; reasoning?: string | null }[];
         };
         if (cancelled) return;
 
-        const responses = d.responses ?? [];
-        const ids = responses.map((x) => x.model as ModelId);
+        const turnsArr: ConvTurn[] | null =
+          Array.isArray(d.turns) && d.turns.length ? (d.turns as ConvTurn[]) : null;
 
         const states: Partial<Record<ModelId, ModelState>> = INITIAL_STATES();
-        for (const resp of responses) {
-          states[resp.model as ModelId] = {
-            status: 'done', content: resp.content, reasoning: resp.reasoning ?? undefined,
-          };
+        let ids: ModelId[] = [];
+        let q = '';
+
+        if (turnsArr) {
+          // conversa multi-turno: turnos anteriores → histórico; último → ronda actual
+          const last = turnsArr[turnsArr.length - 1];
+          setPastTurns(turnsArr.slice(0, -1));
+          ids = Object.keys(last.answers) as ModelId[];
+          for (const [mid, content] of Object.entries(last.answers)) {
+            states[mid as ModelId] = { status: 'done', content: content as string };
+          }
+          q = last.query;
+        } else {
+          // sessão antiga (sem thread guardado): uma ronda a partir de responses
+          setPastTurns([]);
+          const responses = d.responses ?? [];
+          ids = responses.map((x) => x.model as ModelId);
+          for (const resp of responses) {
+            states[resp.model as ModelId] = { status: 'done', content: resp.content, reasoning: resp.reasoning ?? undefined };
+          }
+          q = d.query;
         }
+
+        // cruzamentos guardados → painéis da ronda actual
         for (const cx of d.crossExams ?? []) {
           const tgt = cx.targetModel as ModelId;
           const panel = states[tgt] ?? { status: 'done' as PanelStatus, content: '' };
@@ -130,10 +150,9 @@ export default function ArenaPage() {
 
         abortRef.current?.abort(); // pára qualquer stream em curso
 
-        setPastTurns([]); // a sessão reaberta passa a ser a ronda actual
         setPanelStates(states);
         setRoundModels(ids.length ? ids : ACTIVE_MODELS.map((m) => m.id));
-        setQuery(d.query);
+        setQuery(q);
         setSubmittedAttachment(null);
         const m = d.mode as ModeId;
         if (MODE_LABELS[m]) setMode(m);
@@ -234,6 +253,7 @@ export default function ArenaPage() {
   async function runSynthesis(
     submittedQuery: string,
     finalStates: Partial<Record<ModelId, ModelState>>,
+    sessionId?: string | null,
   ) {
     setPhase('synthesis');
     setSynthesisStatus('processing');
@@ -270,14 +290,23 @@ export default function ArenaPage() {
 
       setSynthesisStatus('streaming');
 
+      let full = '';
       await readSSE(
         resp.body,
-        (_mid, token, kind) => { if (kind !== 'reasoning') setSynthesisContent((c) => c + token); },
+        (_mid, token, kind) => { if (kind !== 'reasoning') { full += token; setSynthesisContent((c) => c + token); } },
         () => {},
         () => setSynthesisStatus('error'),
         () => {
           setSynthesisStatus('done');
           setPhase('done');
+          // persiste a síntese na sessão da conversa
+          if (sessionId && full.trim()) {
+            fetch(`/api/sessions/${sessionId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ synthesis: full }),
+            }).catch(() => {});
+          }
         },
       );
     } catch {
@@ -381,23 +410,42 @@ export default function ArenaPage() {
             return next;
           });
 
-          // Persist session
+          // Persiste a conversa: 1.ª ronda → cria a sessão; rondas seguintes →
+          // actualizam a MESMA sessão (uma conversa = uma sessão) com o thread
+          // completo (turns). Assim reabrir restaura a conversa toda + contexto.
+          let sessionId = activeSessionId;
           try {
             const responses = activeIds
               .filter((id) => finalStates[id]?.status === 'done')
               .map((id) => ({ model: id, content: finalStates[id]!.content, reasoning: finalStates[id]!.reasoning }));
 
-            const sess = await fetch('/api/sessions', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ query: submittedQuery, mode, voices: responses.length, responses }),
-            });
-            const sessData = await sess.json();
-            if (sessData?.id) setActiveSessionId(sessData.id);
+            const currentAnswers: Record<string, string> = {};
+            for (const id of activeIds) {
+              const st = finalStates[id];
+              if (st?.status === 'done' && st.content) currentAnswers[id] = st.content;
+            }
+            const allTurns = [...history, { query: submittedQuery, answers: currentAnswers }];
+            const turnsJson = JSON.stringify(allTurns);
+
+            if (sessionId) {
+              await fetch(`/api/sessions/${sessionId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ turns: turnsJson, voices: responses.length }),
+              });
+            } else {
+              const sess = await fetch('/api/sessions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: allTurns[0].query, mode, voices: responses.length, responses, turns: turnsJson }),
+              });
+              const sessData = await sess.json();
+              if (sessData?.id) { sessionId = sessData.id; setActiveSessionId(sessData.id); }
+            }
           } catch { /* non-fatal */ }
 
-          // Start synthesis
-          await runSynthesis(submittedQuery, finalStates);
+          // Síntese (e persiste-a na sessão da conversa).
+          await runSynthesis(submittedQuery, finalStates, sessionId);
         },
         (modelId, srcs) => {
           const prev = finalStates[modelId] ?? { status: 'streaming' as PanelStatus, content: '' };
@@ -425,7 +473,7 @@ export default function ArenaPage() {
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, mode, grounding, selectedModels, updatePanel, setActiveSessionId, query, pastTurns, roundModels, panelStates]);
+  }, [phase, mode, grounding, selectedModels, updatePanel, setActiveSessionId, query, pastTurns, roundModels, panelStates, activeSessionId]);
 
   // Selecção de modo. Consolidação combina com pesquisa web — sugere (não força)
   // grounding ON; o utilizador pode desligar a seguir.

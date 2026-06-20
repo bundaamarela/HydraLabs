@@ -24,6 +24,7 @@ model Session {
   voices    Int        @default(6)
   synthesis String?
   notes     String?
+  turns     String?    // conversa multi-turno (JSON: [{query, answers:{model:content}}])
   projectId String?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt

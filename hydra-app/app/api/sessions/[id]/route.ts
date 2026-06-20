@@ -28,7 +28,17 @@ export async function GET(_req: NextRequest, { params }: Params) {
     `;
   } catch { /* tabela ausente / motor — devolve vazio */ }
 
-  return NextResponse.json({ ...session, crossExams });
+  // Thread multi-turno (coluna "turns", JSON) por SQL directo — null/parse falha → null.
+  let turns: unknown = null;
+  try {
+    const rows = await db.$queryRaw<{ turns: string | null }[]>`
+      SELECT "turns" FROM "Session" WHERE "id" = ${params.id}
+    `;
+    const raw = rows[0]?.turns;
+    if (raw) turns = JSON.parse(raw);
+  } catch { /* coluna ausente / parse — devolve null */ }
+
+  return NextResponse.json({ ...session, crossExams, turns });
 }
 
 // PATCH /api/sessions/:id — update notes or synthesis
@@ -37,6 +47,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     title?: string;
     notes?: string;
     synthesis?: string;
+    voices?: number;
+    turns?: string; // conversa multi-turno serializada (JSON)
   };
 
   try {
@@ -52,8 +64,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         ...(body.title     !== undefined ? { title: body.title }         : {}),
         ...(body.notes     !== undefined ? { notes: body.notes }         : {}),
         ...(body.synthesis !== undefined ? { synthesis: body.synthesis } : {}),
+        ...(body.voices    !== undefined ? { voices: body.voices }       : {}),
       },
     });
+
+    // Thread multi-turno por SQL directo (o client gerado pode não conhecer a coluna).
+    if (body.turns !== undefined) {
+      try {
+        await db.$executeRaw`UPDATE "Session" SET "turns" = ${body.turns} WHERE "id" = ${params.id}`;
+      } catch { /* coluna ausente — ignora */ }
+    }
+
     return NextResponse.json(session);
   } catch {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });

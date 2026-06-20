@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
     responses?: { model: string; content: string; reasoning?: string }[];
     synthesis?: string;
     notes?: string;
+    turns?: string; // conversa multi-turno serializada (JSON)
   };
 
   try {
@@ -86,6 +87,13 @@ export async function POST(req: NextRequest) {
       }
     }),
   );
+
+  // Thread da conversa (multi-turno) — também por SQL directo.
+  if (body.turns) {
+    try {
+      await db.$executeRaw`UPDATE "Session" SET "turns" = ${body.turns} WHERE "id" = ${session.id}`;
+    } catch { /* coluna ausente — ignora */ }
+  }
 
   return NextResponse.json(session, { status: 201 });
 }
