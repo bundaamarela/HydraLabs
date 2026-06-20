@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\"",
+    "rebuild": "npm run clean && next build",
     "lint": "next lint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
