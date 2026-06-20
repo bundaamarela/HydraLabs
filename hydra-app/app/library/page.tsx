@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/app/providers';
 import { PageFrame } from '@/components/layout/PageFrame';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { getModelById, type ModelId } from '@/lib/models';
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,7 @@ interface SessionDetail extends SessionItem {
   notes: string | null;
   responses: { model: string; content: string }[];
   crossExams?: { sourceModel: string; targetModel: string; action: string; content: string }[];
+  turns?: { query: string; answers: Record<string, string> }[] | null;
   tags: { name: string }[];
 }
 
@@ -138,20 +140,38 @@ function formatDate(iso: string) {
 }
 
 function exportMarkdown(session: SessionDetail) {
+  const modelName = (id: string) => getModelById(id as ModelId)?.name ?? id;
+
   const lines: string[] = [
     `# ${session.title}`, '',
     `**Modo:** ${MODE_LABELS[session.mode] ?? session.mode}  `,
     `**Data:** ${new Date(session.createdAt).toLocaleString('pt-PT')}  `,
-    `**Vozes:** ${session.voices}`, '', '---', '', '## Consulta', '', session.query, '',
+    `**Vozes:** ${session.voices}`, '', '---', '',
   ];
-  if (session.responses.length > 0) {
-    lines.push('---', '', '## Respostas', '');
-    for (const r of session.responses) lines.push(`### ${r.model}`, '', r.content, '');
+
+  const turns = Array.isArray(session.turns) ? session.turns : null;
+  if (turns && turns.length) {
+    // conversa multi-turno completa
+    lines.push('## Conversa', '');
+    turns.forEach((t, i) => {
+      lines.push(`### Turno ${i + 1}`, '', `**Pergunta:** ${t.query}`, '');
+      for (const [model, content] of Object.entries(t.answers)) {
+        lines.push(`#### ${modelName(model)}`, '', String(content), '');
+      }
+    });
+  } else {
+    // sessão antiga (uma só ronda)
+    lines.push('## Consulta', '', session.query, '');
+    if (session.responses.length > 0) {
+      lines.push('---', '', '## Respostas', '');
+      for (const r of session.responses) lines.push(`### ${modelName(r.model)}`, '', r.content, '');
+    }
   }
+
   if (session.crossExams && session.crossExams.length > 0) {
     lines.push('---', '', '## Cruzamentos', '');
     for (const c of session.crossExams) {
-      lines.push(`### ${c.targetModel} ${c.action} → ${c.sourceModel}`, '', c.content, '');
+      lines.push(`### ${modelName(c.targetModel)} ${c.action} → ${modelName(c.sourceModel)}`, '', c.content, '');
     }
   }
   if (session.synthesis) lines.push('---', '', '## Síntese', '', session.synthesis, '');
